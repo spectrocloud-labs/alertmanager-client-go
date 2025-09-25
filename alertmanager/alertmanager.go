@@ -22,6 +22,7 @@ var (
 	// ErrEmissionFailed is returned when alert emission fails.
 	ErrEmissionFailed = errors.New("emission failed")
 
+	// ErrNilHTTPClient is returned when a nil HTTP client is provided.
 	ErrNilHTTPClient = errors.New("HTTP client cannot be nil")
 )
 
@@ -34,7 +35,7 @@ type Alertmanager struct {
 	username string
 	password string
 
-	// base labels and annotations to be applied to all alerts
+	// base labels and annotations to be applied to all alerts created by this Alertmanager instance
 	labels      map[string]string
 	annotations map[string]string
 }
