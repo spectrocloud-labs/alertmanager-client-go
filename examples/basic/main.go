@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/spectrocloud-labs/alertmanager-client-go/alertmanager"
+	alertmanager "github.com/spectrocloud-labs/alertmanager-client-go"
 )
 
 func main() {
@@ -29,21 +29,18 @@ func main() {
 	cpuAlert := alertmanager.NewAlert().
 		WithLabel("alertname", "HighCPUUsage").
 		WithLabel("severity", "warning").
-		WithLabel("instance", "web-01").
 		WithAnnotation("summary", "CPU usage is above 80%").
 		WithAnnotation("description", "The CPU usage on web-01 has been above 80% for more than 5 minutes")
 
 	memoryAlert := alertmanager.NewAlert().
 		WithLabel("alertname", "HighMemoryUsage").
 		WithLabel("severity", "critical").
-		WithLabel("instance", "web-01").
 		WithAnnotation("summary", "Memory usage is above 95%").
 		WithAnnotation("description", "The memory usage on web-01 has reached critical levels")
 
 	diskAlert := alertmanager.NewAlert().
 		WithLabel("alertname", "DiskSpaceLow").
 		WithLabel("severity", "warning").
-		WithLabel("instance", "web-01").
 		WithLabel("mountpoint", "/var/log").
 		WithAnnotation("summary", "Disk space is running low").
 		WithAnnotation("description", "Only 10% disk space remaining on /var/log")
