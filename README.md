@@ -10,13 +10,20 @@ go get github.com/spectrocloud-labs/alertmanager-client-go
 
 ## Developer Guide
 
+### Running Tests
+
+```bash
+# Run all tests
+cd alertmanager
+go test -v ./...
+```
+
 ### Running the Example
 
 1. **Start Alertmanager using Docker Compose:**
    ```bash
-   cd examples/basic
-
    # Start Alertmanager with the provided configuration
+   cd examples/basic
    docker-compose up -d
 
    # Check that Alertmanager is running
@@ -31,11 +38,12 @@ go get github.com/spectrocloud-labs/alertmanager-client-go
 
 3. **Verify alerts were received:**
    - Open http://localhost:9093 in your browser to see the Alertmanager web UI
-   - You should see 3 alerts: HighCPUUsage, HighMemoryUsage, and DiskSpaceLow
+   - You should see 3 alerts: `HighCPUUsage`, `HighMemoryUsage`, and `DiskSpaceLow`
    - All alerts will have the base labels (`service=example-service`, `environment=development`) and annotation (`team=platform`)
+   - Each alert will have custom lables and annotations
 
 4. **Clean up:**
    ```bash
-   # Stop Alertmanager (from examples/basic directory)
+   # From the examples/basic directory
    docker-compose down
    ```
