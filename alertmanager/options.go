@@ -39,7 +39,6 @@ func WithEndpoint(endpoint string) Option {
 }
 
 // WithBasicAuth sets basic authentication credentials.
-// Matches original Configure implementation exactly.
 func WithBasicAuth(username, password string) Option {
 	return func(a *Alertmanager) error {
 		a.username = username
@@ -49,7 +48,6 @@ func WithBasicAuth(username, password string) Option {
 }
 
 // WithCustomCA configures TLS with a custom CA certificate.
-// This modifies the transport of the existing HTTP client.
 func WithCustomCA(caCert []byte) Option {
 	return func(a *Alertmanager) error {
 		caCertPool, err := x509.SystemCertPool()
@@ -80,7 +78,6 @@ func WithCustomCA(caCert []byte) Option {
 }
 
 // WithInsecure configures TLS to skip certificate verification.
-// This modifies the transport of the existing HTTP client.
 func WithInsecure(insecureSkipVerify bool) Option {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
@@ -102,7 +99,6 @@ func WithInsecure(insecureSkipVerify bool) Option {
 }
 
 // WithTimeout sets the HTTP client timeout on the existing client.
-// Works independently - modifies the current client's timeout.
 func WithTimeout(timeout time.Duration) Option {
 	return func(a *Alertmanager) error {
 		a.client.Timeout = timeout

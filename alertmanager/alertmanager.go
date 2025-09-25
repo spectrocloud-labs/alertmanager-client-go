@@ -70,29 +70,24 @@ func (a *Alertmanager) Emit(alerts ...*Alert) error {
 		return nil
 	}
 
-	// Validate that endpoint is set
 	if a.endpoint == "" {
 		return ErrEndpointRequired
 	}
 
-	// Merge base labels and annotations with each alert
 	finalAlerts := make([]Alert, 0, len(alerts))
 	for _, alert := range alerts {
 		if alert == nil {
 			continue
 		}
 
-		// Create a new alert with merged labels and annotations
 		mergedAlert := Alert{
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
 		}
 
-		// merge labels
+		// merge labels and annotations
 		maps.Copy(mergedAlert.Labels, a.labels)
 		maps.Copy(mergedAlert.Labels, alert.Labels)
-
-		// merge annotations
 		maps.Copy(mergedAlert.Annotations, a.annotations)
 		maps.Copy(mergedAlert.Annotations, alert.Annotations)
 
