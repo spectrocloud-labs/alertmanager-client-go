@@ -17,20 +17,20 @@ func TestNewAlertmanager(t *testing.T) {
 		name        string
 		logger      logr.Logger
 		client      *http.Client
-		options     []Option
+		options     []ManagerOption
 		expectedErr error
 	}{
 		{
 			name:    "no options",
 			logger:  logger,
 			client:  client,
-			options: []Option{},
+			options: []ManagerOption{},
 		},
 		{
 			name:   "nil client",
 			logger: logger,
 			client: nil,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("http://alertmanager:9093"),
 			},
 			expectedErr: ErrNilHTTPClient,
@@ -39,7 +39,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "empty endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint(""),
 			},
 			expectedErr: ErrEndpointRequired,
@@ -48,7 +48,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "invalid endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("_not_an_endpoint_"),
 			},
 			expectedErr: ErrInvalidEndpoint,
@@ -57,7 +57,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "valid endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("http://alertmanager:9093"),
 			},
 		},
@@ -65,7 +65,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "with basic auth and endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("http://alertmanager:9093"),
 				WithBasicAuth("user", "pass"),
 			},
@@ -74,7 +74,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "with timeout and endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("http://alertmanager:9093"),
 				WithTimeout(45 * time.Second),
 			},
@@ -83,7 +83,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "with custom CA and endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("https://alertmanager:9093"),
 				WithCustomCA([]byte("fake-cert")),
 			},
@@ -92,7 +92,7 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "with insecure TLS and endpoint",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("https://alertmanager:9093"),
 				WithInsecure(true),
 			},
@@ -101,10 +101,10 @@ func TestNewAlertmanager(t *testing.T) {
 			name:   "with base labels and annotations",
 			logger: logger,
 			client: client,
-			options: []Option{
+			options: []ManagerOption{
 				WithEndpoint("http://alertmanager:9093"),
-				WithLabel("service", "test"),
-				WithAnnotation("team", "platform"),
+				WithBaseLabel("service", "test"),
+				WithBaseAnnotation("team", "platform"),
 			},
 		},
 	}
@@ -142,7 +142,7 @@ func TestEmit(t *testing.T) {
 	tests := []struct {
 		name          string
 		serverStatus  int // 0 = no server, 200 = OK, 500 = error
-		options       []Option
+		options       []ManagerOption
 		alerts        []*Alert
 		expectedError error
 	}{
@@ -150,20 +150,26 @@ func TestEmit(t *testing.T) {
 			name:         "successful emit",
 			serverStatus: http.StatusOK,
 			alerts: []*Alert{
-				NewAlert().WithLabel("alertname", "test").WithAnnotation("message", "test message"),
+				NewAlert(
+					WithLabel("alertname", "test"),
+					WithAnnotation("message", "test message"),
+				),
 			},
 		},
 		{
 			name:         "emit with base fields",
 			serverStatus: http.StatusOK,
-			options: []Option{
-				WithLabel("service", "test-service"),
-				WithLabel("environment", "test"),
-				WithAnnotation("team", "platform"),
+			options: []ManagerOption{
+				WithBaseLabel("service", "test-service"),
+				WithBaseLabel("environment", "test"),
+				WithBaseAnnotation("team", "platform"),
 				WithTimeout(10 * time.Second),
 			},
 			alerts: []*Alert{
-				NewAlert().WithLabel("alertname", "test-alert").WithAnnotation("message", "test message"),
+				NewAlert(
+					WithLabel("alertname", "test-alert"),
+					WithAnnotation("message", "test message"),
+				),
 			},
 		},
 		{
@@ -174,12 +180,15 @@ func TestEmit(t *testing.T) {
 		{
 			name:         "emit with nil alerts",
 			serverStatus: http.StatusOK,
-			alerts:       []*Alert{nil, NewAlert().WithLabel("alertname", "test"), nil},
+			alerts:       []*Alert{nil, NewAlert(WithLabel("alertname", "test")), nil},
 		},
 		{
 			name: "emit without endpoint",
 			alerts: []*Alert{
-				NewAlert().WithLabel("alertname", "test").WithAnnotation("message", "test message"),
+				NewAlert(
+					WithLabel("alertname", "test"),
+					WithAnnotation("message", "test message"),
+				),
 			},
 			expectedError: ErrEndpointRequired,
 		},
@@ -187,7 +196,7 @@ func TestEmit(t *testing.T) {
 			name:         "server returns error",
 			serverStatus: http.StatusInternalServerError,
 			alerts: []*Alert{
-				NewAlert().WithLabel("alertname", "test"),
+				NewAlert(WithLabel("alertname", "test")),
 			},
 			expectedError: ErrEmissionFailed,
 		},
@@ -203,9 +212,9 @@ func TestEmit(t *testing.T) {
 				defer server.Close()
 			}
 
-			var options []Option
+			var options []ManagerOption
 			if server != nil {
-				options = append([]Option{WithEndpoint(server.URL)}, tt.options...)
+				options = append([]ManagerOption{WithEndpoint(server.URL)}, tt.options...)
 			} else {
 				options = tt.options
 			}

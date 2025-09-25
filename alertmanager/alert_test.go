@@ -15,11 +15,12 @@ func TestAlert(t *testing.T) {
 		{
 			name: "alert with labels and annotations",
 			buildAlert: func() *Alert {
-				return NewAlert().
-					WithLabel("alertname", "test").
-					WithLabel("severity", "critical").
-					WithAnnotation("message", "Test message").
-					WithAnnotation("runbook", "https://example.com")
+				return NewAlert(
+					WithLabel("alertname", "test"),
+					WithLabel("severity", "critical"),
+					WithAnnotation("message", "Test message"),
+					WithAnnotation("runbook", "https://example.com"),
+				)
 			},
 			expectedLabels: map[string]string{
 				"alertname": "test",
@@ -41,9 +42,10 @@ func TestAlert(t *testing.T) {
 		{
 			name: "alert with only labels",
 			buildAlert: func() *Alert {
-				return NewAlert().
-					WithLabel("service", "api").
-					WithLabel("environment", "production")
+				return NewAlert(
+					WithLabel("service", "api"),
+					WithLabel("environment", "production"),
+				)
 			},
 			expectedLabels: map[string]string{
 				"service":     "api",
@@ -54,9 +56,10 @@ func TestAlert(t *testing.T) {
 		{
 			name: "alert with only annotations",
 			buildAlert: func() *Alert {
-				return NewAlert().
-					WithAnnotation("summary", "Service is down").
-					WithAnnotation("description", "The API service is not responding")
+				return NewAlert(
+					WithAnnotation("summary", "Service is down"),
+					WithAnnotation("description", "The API service is not responding"),
+				)
 			},
 			expectedLabels: map[string]string{},
 			expectedAnnotations: map[string]string{
@@ -67,11 +70,12 @@ func TestAlert(t *testing.T) {
 		{
 			name: "alert with overwritten values",
 			buildAlert: func() *Alert {
-				return NewAlert().
-					WithLabel("severity", "warning").
-					WithLabel("severity", "critical"). // should overwrite
-					WithAnnotation("message", "first message").
-					WithAnnotation("message", "final message") // should overwrite
+				return NewAlert(
+					WithLabel("severity", "warning"),
+					WithLabel("severity", "critical"), // should overwrite
+					WithAnnotation("message", "first message"),
+					WithAnnotation("message", "final message"), // should overwrite
+				)
 			},
 			expectedLabels: map[string]string{
 				"severity": "critical",

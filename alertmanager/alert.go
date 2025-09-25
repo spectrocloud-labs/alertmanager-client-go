@@ -9,23 +9,39 @@ type Alert struct {
 	Labels map[string]string `json:"labels"`
 }
 
-// NewAlert creates a new Alert with initialized maps.
-func NewAlert() *Alert {
-	return &Alert{
+// AlertOption is a functional option for configuring an Alert.
+type AlertOption func(*Alert)
+
+// NewAlert creates a new Alert with initialized maps and applies the given options.
+func NewAlert(options ...AlertOption) *Alert {
+	alert := &Alert{
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
 	}
+
+	for _, opt := range options {
+		opt(alert)
+	}
+
+	return alert
 }
 
-// WithLabel adds a label to this Alert.
-func (a *Alert) WithLabel(key, value string) *Alert {
-	a.Labels[key] = value
-	return a
+// WithLabel adds a label to an Alert.
+func WithLabel(key, value string) AlertOption {
+	return func(a *Alert) {
+		if a.Labels == nil {
+			a.Labels = make(map[string]string)
+		}
+		a.Labels[key] = value
+	}
 }
 
-// WithAnnotation adds an annotation to this Alert.
-func (a *Alert) WithAnnotation(key, value string) *Alert {
-	a.Annotations[key] = value
-	return a
+// WithAnnotation adds an annotation to an Alert.
+func WithAnnotation(key, value string) AlertOption {
+	return func(a *Alert) {
+		if a.Annotations == nil {
+			a.Annotations = make(map[string]string)
+		}
+		a.Annotations[key] = value
+	}
 }
-

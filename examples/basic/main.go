@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+
 	alertmanager "github.com/spectrocloud-labs/alertmanager-client-go"
 )
 
@@ -16,9 +17,9 @@ func main() {
 	// Create Alertmanager client with base configuration
 	am, err := alertmanager.NewAlertmanager(logger, client,
 		alertmanager.WithEndpoint("http://localhost:9093"),
-		alertmanager.WithLabel("service", "example-service"),
-		alertmanager.WithLabel("environment", "development"),
-		alertmanager.WithAnnotation("team", "platform"),
+		alertmanager.WithBaseLabel("service", "example-service"),
+		alertmanager.WithBaseLabel("environment", "development"),
+		alertmanager.WithBaseAnnotation("team", "platform"),
 	)
 	if err != nil {
 		fmt.Printf("Failed to create Alertmanager client: %v\n", err)
@@ -26,24 +27,27 @@ func main() {
 	}
 
 	// Create multiple alerts
-	cpuAlert := alertmanager.NewAlert().
-		WithLabel("alertname", "HighCPUUsage").
-		WithLabel("severity", "warning").
-		WithAnnotation("summary", "CPU usage is above 80%").
-		WithAnnotation("description", "The CPU usage on web-01 has been above 80% for more than 5 minutes")
+	cpuAlert := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "HighCPUUsage"),
+		alertmanager.WithLabel("severity", "warning"),
+		alertmanager.WithAnnotation("summary", "CPU usage is above 80%"),
+		alertmanager.WithAnnotation("description", "The CPU usage on web-01 has been above 80% for more than 5 minutes"),
+	)
 
-	memoryAlert := alertmanager.NewAlert().
-		WithLabel("alertname", "HighMemoryUsage").
-		WithLabel("severity", "critical").
-		WithAnnotation("summary", "Memory usage is above 95%").
-		WithAnnotation("description", "The memory usage on web-01 has reached critical levels")
+	memoryAlert := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "HighMemoryUsage"),
+		alertmanager.WithLabel("severity", "critical"),
+		alertmanager.WithAnnotation("summary", "Memory usage is above 95%"),
+		alertmanager.WithAnnotation("description", "The memory usage on web-01 has reached critical levels"),
+	)
 
-	diskAlert := alertmanager.NewAlert().
-		WithLabel("alertname", "DiskSpaceLow").
-		WithLabel("severity", "warning").
-		WithLabel("mountpoint", "/var/log").
-		WithAnnotation("summary", "Disk space is running low").
-		WithAnnotation("description", "Only 10% disk space remaining on /var/log")
+	diskAlert := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "DiskSpaceLow"),
+		alertmanager.WithLabel("severity", "warning"),
+		alertmanager.WithLabel("mountpoint", "/var/log"),
+		alertmanager.WithAnnotation("summary", "Disk space is running low"),
+		alertmanager.WithAnnotation("description", "Only 10% disk space remaining on /var/log"),
+	)
 
 	// Emit all alerts at once
 	fmt.Println("Sending alerts to Alertmanager...")

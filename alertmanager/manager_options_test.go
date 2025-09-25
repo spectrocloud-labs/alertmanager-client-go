@@ -167,7 +167,7 @@ func TestWithTimeout(t *testing.T) {
 	}
 }
 
-func TestWithLabel(t *testing.T) {
+func TestWithBaseLabel(t *testing.T) {
 	logger := logr.Discard()
 
 	tests := []struct {
@@ -206,7 +206,7 @@ func TestWithLabel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			am, err := NewAlertmanager(logger, &http.Client{},
 				WithEndpoint("http://example.com"),
-				WithLabel(tt.key, tt.value))
+				WithBaseLabel(tt.key, tt.value))
 			if err != nil {
 				t.Fatalf("failed to create alertmanager: %v", err)
 			}
@@ -218,7 +218,7 @@ func TestWithLabel(t *testing.T) {
 	}
 }
 
-func TestWithAnnotation(t *testing.T) {
+func TestWithBaseAnnotation(t *testing.T) {
 	logger := logr.Discard()
 
 	tests := []struct {
@@ -257,7 +257,7 @@ func TestWithAnnotation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			am, err := NewAlertmanager(logger, &http.Client{},
 				WithEndpoint("http://example.com"),
-				WithAnnotation(tt.key, tt.value))
+				WithBaseAnnotation(tt.key, tt.value))
 			if err != nil {
 				t.Fatalf("failed to create alertmanager: %v", err)
 			}

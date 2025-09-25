@@ -11,11 +11,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Option represents a configuration option for Alertmanager.
-type Option func(*Alertmanager) error
+// ManagerOption represents a configuration option for Alertmanager.
+type ManagerOption func(*Alertmanager) error
 
 // WithEndpoint sets the Alertmanager endpoint URL.
-func WithEndpoint(endpoint string) Option {
+func WithEndpoint(endpoint string) ManagerOption {
 	return func(a *Alertmanager) error {
 		if endpoint == "" {
 			return ErrEndpointRequired
@@ -39,7 +39,7 @@ func WithEndpoint(endpoint string) Option {
 }
 
 // WithBasicAuth sets basic authentication credentials.
-func WithBasicAuth(username, password string) Option {
+func WithBasicAuth(username, password string) ManagerOption {
 	return func(a *Alertmanager) error {
 		a.username = username
 		a.password = password
@@ -48,7 +48,7 @@ func WithBasicAuth(username, password string) Option {
 }
 
 // WithCustomCA configures TLS with a custom CA certificate.
-func WithCustomCA(caCert []byte) Option {
+func WithCustomCA(caCert []byte) ManagerOption {
 	return func(a *Alertmanager) error {
 		caCertPool, err := x509.SystemCertPool()
 		if err != nil {
@@ -78,7 +78,7 @@ func WithCustomCA(caCert []byte) Option {
 }
 
 // WithInsecure configures TLS to skip certificate verification.
-func WithInsecure(insecureSkipVerify bool) Option {
+func WithInsecure(insecureSkipVerify bool) ManagerOption {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
@@ -99,15 +99,15 @@ func WithInsecure(insecureSkipVerify bool) Option {
 }
 
 // WithTimeout sets the HTTP client timeout on the existing client.
-func WithTimeout(timeout time.Duration) Option {
+func WithTimeout(timeout time.Duration) ManagerOption {
 	return func(a *Alertmanager) error {
 		a.client.Timeout = timeout
 		return nil
 	}
 }
 
-// WithLabel adds a base label that will be applied to all alerts.
-func WithLabel(key, value string) Option {
+// WithBaseLabel adds a base label that will be applied to all alerts.
+func WithBaseLabel(key, value string) ManagerOption {
 	return func(a *Alertmanager) error {
 		if a.labels == nil {
 			a.labels = make(map[string]string)
@@ -117,8 +117,8 @@ func WithLabel(key, value string) Option {
 	}
 }
 
-// WithAnnotation adds a base annotation that will be applied to all alerts.
-func WithAnnotation(key, value string) Option {
+// WithBaseAnnotation adds a base annotation that will be applied to all alerts.
+func WithBaseAnnotation(key, value string) ManagerOption {
 	return func(a *Alertmanager) error {
 		if a.annotations == nil {
 			a.annotations = make(map[string]string)

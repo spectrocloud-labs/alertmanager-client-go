@@ -42,7 +42,7 @@ type Alertmanager struct {
 
 // NewAlertmanager creates a new Alertmanager instance with the provided logger, HTTP client, and options.
 // The logger and client are required. Use WithEndpoint() to set the endpoint.
-func NewAlertmanager(logger logr.Logger, client *http.Client, options ...Option) (*Alertmanager, error) {
+func NewAlertmanager(logger logr.Logger, client *http.Client, options ...ManagerOption) (*Alertmanager, error) {
 	if client == nil {
 		return nil, ErrNilHTTPClient
 	}
