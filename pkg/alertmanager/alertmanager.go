@@ -21,6 +21,8 @@ var (
 
 	// ErrEmissionFailed is returned when alert emission fails.
 	ErrEmissionFailed = errors.New("emission failed")
+
+	ErrNilHTTPClient = errors.New("HTTP client cannot be nil")
 )
 
 // Alertmanager represents the Alertmanager client.
@@ -41,7 +43,7 @@ type Alertmanager struct {
 // The logger and client are required. Use WithEndpoint() to set the endpoint.
 func NewAlertmanager(logger logr.Logger, client *http.Client, options ...Option) (*Alertmanager, error) {
 	if client == nil {
-		return nil, errors.New("HTTP client cannot be nil")
+		return nil, ErrNilHTTPClient
 	}
 
 	am := &Alertmanager{
