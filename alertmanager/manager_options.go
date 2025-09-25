@@ -61,7 +61,9 @@ func WithCustomCA(caCert []byte) ManagerOption {
 
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{}
+			transport = &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			}
 		}
 
 		if transport.TLSClientConfig == nil {
@@ -82,7 +84,9 @@ func WithInsecure(insecureSkipVerify bool) ManagerOption {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{}
+			transport = &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			}
 		}
 
 		if transport.TLSClientConfig == nil {
@@ -91,7 +95,31 @@ func WithInsecure(insecureSkipVerify bool) ManagerOption {
 			}
 		}
 
-		transport.TLSClientConfig.InsecureSkipVerify = insecureSkipVerify // #nosec G402
+		transport.TLSClientConfig.InsecureSkipVerify = insecureSkipVerify
+		a.client.Transport = transport
+
+		return nil
+	}
+}
+
+// WithProxyURL configures an HTTP proxy for the client.
+func WithProxyURL(proxyURL string) ManagerOption {
+	return func(a *Alertmanager) error {
+		if proxyURL == "" {
+			return nil
+		}
+
+		parsedURL, err := url.Parse(proxyURL)
+		if err != nil {
+			return errors.Wrap(err, "invalid proxy URL")
+		}
+
+		transport, ok := a.client.Transport.(*http.Transport)
+		if !ok {
+			transport = &http.Transport{}
+		}
+
+		transport.Proxy = http.ProxyURL(parsedURL)
 		a.client.Transport = transport
 
 		return nil

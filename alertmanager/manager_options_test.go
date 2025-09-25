@@ -346,3 +346,67 @@ func TestWithInsecure(t *testing.T) {
 		})
 	}
 }
+
+func TestWithProxyURL(t *testing.T) {
+	logger := logr.Discard()
+
+	tests := []struct {
+		name        string
+		proxyURL    string
+		expectError bool
+	}{
+		{
+			name:     "valid proxy URL",
+			proxyURL: "http://proxy.example.com:8080",
+		},
+		{
+			name:     "valid https proxy URL",
+			proxyURL: "https://secure-proxy.example.com:3128",
+		},
+		{
+			name:     "empty proxy URL",
+			proxyURL: "",
+		},
+		{
+			name:        "invalid proxy URL",
+			proxyURL:    "://invalid-url",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &http.Client{}
+			am, err := NewAlertmanager(logger, client,
+				WithEndpoint("https://example.com"),
+				WithProxyURL(tt.proxyURL))
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error for proxy URL '%s', but got none", tt.proxyURL)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error for proxy URL '%s': %v", tt.proxyURL, err)
+				return
+			}
+
+			// Verify transport was configured
+			transport, ok := am.client.Transport.(*http.Transport)
+			if !ok {
+				if tt.proxyURL == "" {
+					return
+				}
+
+				t.Errorf("expected http.Transport, got %T", am.client.Transport)
+				return
+			}
+
+			if transport.Proxy == nil {
+				t.Errorf("expected proxy to be set")
+			}
+		})
+	}
+}
