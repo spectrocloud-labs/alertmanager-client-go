@@ -2,33 +2,15 @@ package alertmanager
 
 import (
 	"bytes"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
-	"net/url"
-	"strconv"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
-
-// Alertmanager represents the Alertmanager client.
-type Alertmanager struct {
-	client Client
-	log    logr.Logger
-
-	endpoint string
-	username string
-	password string
-
-	// base labels and annotations to be applied to all alerts
-	labels      map[string]string
-	annotations map[string]string
-}
 
 var (
 	// ErrInvalidEndpoint is returned when an Alertmanager endpoint is invalid.
@@ -41,92 +23,53 @@ var (
 	ErrEmissionFailed = errors.New("emission failed")
 )
 
-// Configure configures the Alertmanager with the provided configuration.
-func (a *Alertmanager) Configure(c Client, config map[string][]byte) error {
-	// endpoint
-	endpoint, ok := config["endpoint"]
-	if !ok {
-		return ErrEndpointRequired
-	}
-	u, err := url.Parse(string(endpoint))
-	if err != nil {
-		return errors.Wrap(err, "invalid Alertmanager config: failed to parse endpoint")
-	}
-	if u.Scheme == "" || u.Host == "" {
-		return ErrInvalidEndpoint
-	}
-	if u.Path != "" {
-		a.log.V(1).Info("stripping path from Alertmanager endpoint", "path", u.Path)
-		u.Path = ""
-	}
-	a.endpoint = fmt.Sprintf("%s/api/v2/alerts", u.String())
+// Alertmanager represents the Alertmanager client.
+type Alertmanager struct {
+	client *http.Client
+	log    logr.Logger
 
-	// basic auth
-	a.username = string(config["username"])
-	a.password = string(config["password"])
+	endpoint string
+	username string
+	password string
 
-	// tls
-	var caCertPool *x509.CertPool
-	var insecureSkipVerify bool
-
-	insecure, ok := config["insecureSkipVerify"]
-	if ok {
-		insecureSkipVerify, err = strconv.ParseBool(string(insecure))
-		if err != nil {
-			return errors.Wrap(err, "invalid Alertmanager config: failed to parse insecureSkipVerify")
-		}
-	}
-	caCert, ok := config["caCert"]
-	if ok {
-		caCertPool, err = x509.SystemCertPool()
-		if err != nil {
-			a.log.Error(err, "failed to get system cert pool; using empty pool")
-			caCertPool = x509.NewCertPool()
-		}
-		caCertPool.AppendCertsFromPEM(caCert)
-	}
-	c.hclient.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: insecureSkipVerify, // #nosec G402
-			MinVersion:         tls.VersionTLS12,
-			RootCAs:            caCertPool,
-		},
-	}
-	a.client = c
-
-	// Initialize base labels and annotations maps if not already initialized
-	if a.labels == nil {
-		a.labels = make(map[string]string)
-	}
-	if a.annotations == nil {
-		a.annotations = make(map[string]string)
-	}
-
-	return nil
+	// base labels and annotations to be applied to all alerts
+	labels      map[string]string
+	annotations map[string]string
 }
 
-// WithLabel adds a base label that will be applied to all alerts sent by this Alertmanager.
-func (a *Alertmanager) WithLabel(key, value string) *Alertmanager {
-	if a.labels == nil {
-		a.labels = make(map[string]string)
+// NewAlertmanager creates a new Alertmanager instance with the provided logger, HTTP client, and options.
+// The logger and client are required. Use WithEndpoint() to set the endpoint.
+func NewAlertmanager(logger logr.Logger, client *http.Client, options ...Option) (*Alertmanager, error) {
+	if client == nil {
+		return nil, errors.New("HTTP client cannot be nil")
 	}
-	a.labels[key] = value
-	return a
-}
 
-// WithAnnotation adds a base annotation that will be applied to all alerts sent by this Alertmanager.
-func (a *Alertmanager) WithAnnotation(key, value string) *Alertmanager {
-	if a.annotations == nil {
-		a.annotations = make(map[string]string)
+	am := &Alertmanager{
+		client:      client,
+		log:         logger,
+		labels:      make(map[string]string),
+		annotations: make(map[string]string),
 	}
-	a.annotations[key] = value
-	return a
+
+	// Apply all options
+	for _, opt := range options {
+		if err := opt(am); err != nil {
+			return nil, err
+		}
+	}
+
+	return am, nil
 }
 
 // Emit sends one or more alerts to Alertmanager.
 func (a *Alertmanager) Emit(alerts ...*Alert) error {
 	if len(alerts) == 0 {
 		return nil
+	}
+
+	// Validate that endpoint is set
+	if a.endpoint == "" {
+		return ErrEndpointRequired
 	}
 
 	// Merge base labels and annotations with each alert
@@ -171,7 +114,7 @@ func (a *Alertmanager) Emit(alerts ...*Alert) error {
 		req.Header.Add(basicAuthHeader(a.username, a.password))
 	}
 
-	resp, err := a.client.hclient.Do(req)
+	resp, err := a.client.Do(req)
 	defer func() {
 		if resp != nil {
 			_ = resp.Body.Close()
