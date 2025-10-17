@@ -1,5 +1,7 @@
 package alertmanager
 
+import "time"
+
 // Alert is an Alertmanager alert.
 type Alert struct {
 	// Annotations are arbitrary key-value pairs.
@@ -7,6 +9,13 @@ type Alert struct {
 
 	// Labels are key-value pairs that can be used to group and filter alerts.
 	Labels map[string]string `json:"labels"`
+
+	// StartsAt is the time the alert started firing. If omitted, the current time is used.
+	StartsAt *time.Time `json:"startsAt,omitempty"`
+
+	// EndsAt is the time the alert should be considered resolved.
+	// If omitted, the alert will be resolved after the global resolve_timeout.
+	EndsAt *time.Time `json:"endsAt,omitempty"`
 }
 
 // AlertOption is a functional option for configuring an Alert.
@@ -43,5 +52,19 @@ func WithAnnotation(key, value string) AlertOption {
 			a.Annotations = make(map[string]string)
 		}
 		a.Annotations[key] = value
+	}
+}
+
+// WithStartsAt sets the start time of an Alert.
+func WithStartsAt(t time.Time) AlertOption {
+	return func(a *Alert) {
+		a.StartsAt = &t
+	}
+}
+
+// WithEndsAt sets the end time of an Alert.
+func WithEndsAt(t time.Time) AlertOption {
+	return func(a *Alert) {
+		a.EndsAt = &t
 	}
 }

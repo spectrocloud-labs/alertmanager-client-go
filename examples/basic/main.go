@@ -17,7 +17,7 @@ func main() {
 	// Create Alertmanager client with base configuration
 	am, err := alertmanager.NewAlertmanager(logger, client,
 		alertmanager.WithEndpoint("http://localhost:9093"),
-		alertmanager.WithBaseLabel("service", "example-service"),
+		alertmanager.WithBaseLabel("service", "basic-demo"),
 		alertmanager.WithBaseLabel("environment", "development"),
 		alertmanager.WithBaseAnnotation("team", "platform"),
 	)
@@ -49,14 +49,20 @@ func main() {
 		alertmanager.WithAnnotation("description", "Only 10% disk space remaining on /var/log"),
 	)
 
+	alerts := []*alertmanager.Alert{cpuAlert, memoryAlert, diskAlert}
+
 	// Emit all alerts at once
 	fmt.Println("Sending alerts to Alertmanager...")
-	err = am.Emit(cpuAlert, memoryAlert, diskAlert)
+	err = am.Emit(alerts...)
 	if err != nil {
 		fmt.Printf("Failed to send alerts: %v\n", err)
 		return
 	}
 
-	fmt.Println("✅ Successfully sent 3 alerts to Alertmanager!")
-	fmt.Println("Check the Alertmanager web UI at http://localhost:9093 to see your alerts.")
+	fmt.Printf("Successfully sent %d alerts to Alertmanager!\n", len(alerts))
+	fmt.Println("\nAlerts sent:")
+	fmt.Println("1. HighCPUUsage - Warning severity")
+	fmt.Println("2. HighMemoryUsage - Critical severity")
+	fmt.Println("3. DiskSpaceLow - Warning severity with custom mountpoint label")
+	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093 to see the alerts.")
 }

@@ -83,6 +83,8 @@ func (a *Alertmanager) Emit(alerts ...*Alert) error {
 		mergedAlert := Alert{
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
+			StartsAt:    alert.StartsAt,
+			EndsAt:      alert.EndsAt,
 		}
 
 		// merge labels and annotations
