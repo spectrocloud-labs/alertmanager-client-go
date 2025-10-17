@@ -17,9 +17,11 @@ Each alert demonstrates:
 
 ## Running the Example
 
-1. **Start Alertmanager:**
+1. **Start Alertmanager (from examples directory):**
    ```bash
+   cd ..
    docker-compose up -d
+   cd basic
    ```
 
 2. **Verify Alertmanager is running:**
@@ -35,10 +37,11 @@ Each alert demonstrates:
 4. **View the alerts:**
    - Open http://localhost:9093 in your browser to see the Alertmanager web UI
    - You should see all 3 alerts with their labels and annotations
-   - Each alert will have the base labels (`service=example-service`, `environment=development`) and base annotation (`team=platform`)
+   - Each alert will have the base labels (`service=basic-demo`, `environment=development`) and base annotation (`team=platform`)
 
 5. **Clean up:**
    ```bash
+   cd ..
    docker-compose down
    ```
 

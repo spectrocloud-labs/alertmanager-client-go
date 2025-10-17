@@ -15,6 +15,9 @@ route:
   - matchers:
     - service="time-demo"
     receiver: 'examples'
+  - matchers:
+    - service="audit-demo"
+    receiver: 'examples'
 
 receivers:
 - name: 'default-receiver'

@@ -24,13 +24,21 @@ The `examples/` directory contains multiple examples demonstrating different fea
 Available examples:
 - **basic** - Basic usage of the library with simple alerts
 - **time** - Demonstrates time-based alerts using `WithStartsAt()` and `WithEndsAt()`
+- **audit** - Using Alertmanager as an audit log sink for CRUD operations
 
 To run an example:
 ```bash
-cd examples/<example-name>
-docker-compose up -d        # Start Alertmanager
-go run main.go              # Run the example
-docker-compose down         # Clean up when done
+# Start Alertmanager (only needs to be done once)
+cd examples
+docker-compose up -d
+
+# Run any example
+cd <example-name>
+go run main.go
+
+# Clean up when done
+cd ..
+docker-compose down
 ```
 
 See each example's README for detailed information about what it demonstrates.

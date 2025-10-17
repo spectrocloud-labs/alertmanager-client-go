@@ -16,9 +16,11 @@ This example creates 4 alerts demonstrating different timing behaviors:
 
 ## Running the Example
 
-1. **Start Alertmanager:**
+1. **Start Alertmanager (from examples directory):**
    ```bash
+   cd ..
    docker-compose up -d
+   cd time
    ```
 
 2. **Run the example:**
@@ -36,6 +38,7 @@ This example creates 4 alerts demonstrating different timing behaviors:
 
 4. **Clean up:**
    ```bash
+   cd ..
    docker-compose down
    ```
 
