@@ -1,10 +1,8 @@
 package alertmanager
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestAlert(t *testing.T) {
