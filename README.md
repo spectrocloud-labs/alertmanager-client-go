@@ -17,28 +17,12 @@ go get github.com/spectrocloud-labs/alertmanager-client-go
 go test -v ./...
 ```
 
-### Running the Examples
+### Examples
 
-The `examples/` directory contains multiple examples demonstrating different features of the library. Each example has its own README with specific instructions.
+The `examples/` directory contains multiple examples demonstrating different features of the library:
 
-Available examples:
 - **basic** - Basic usage of the library with simple alerts
 - **time** - Demonstrates time-based alerts using `WithStartsAt()` and `WithEndsAt()`
 - **audit** - Using Alertmanager as an audit log sink for CRUD operations
 
-To run an example:
-```bash
-# Start Alertmanager (only needs to be done once)
-cd examples
-docker-compose up -d
-
-# Run any example
-cd <example-name>
-go run main.go
-
-# Clean up when done
-cd ..
-docker-compose down
-```
-
-See each example's README for detailed information about what it demonstrates.
+See [examples/README.md](examples/README.md) for detailed information about each example and instructions on how to run them.
