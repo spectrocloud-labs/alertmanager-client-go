@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,6 +11,15 @@ import (
 
 	alertmanager "github.com/spectrocloud-labs/alertmanager-client-go"
 )
+
+// generateAuditID generates a cryptographically secure random audit ID
+func generateAuditID() (string, error) {
+	bytes := make([]byte, 16) // 16 bytes = 32 hex characters
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
 
 func main() {
 	logger := logr.Discard() // Use your preferred logger
@@ -32,10 +43,14 @@ func main() {
 	user := "john@example.com"
 
 	fmt.Println("Simulating CRUD operations on ConfigMap...")
-	fmt.Println()
 
 	// Operation 1: Create ConfigMap
-	fmt.Printf("[%s] CREATE ConfigMap %s/%s by %s\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user)
+	auditID, err := generateAuditID()
+	if err != nil {
+		fmt.Printf("Failed to generate audit ID: %v\n", err)
+		return
+	}
+	fmt.Printf("[%s] CREATE ConfigMap %s/%s by %s (audit_id: %s)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user, auditID)
 	createAlert := alertmanager.NewAlert(
 		alertmanager.WithLabel("alertname", "AuditLog"),
 		alertmanager.WithLabel("operation", "create"),
@@ -43,7 +58,7 @@ func main() {
 		alertmanager.WithLabel("resource_namespace", resourceNamespace),
 		alertmanager.WithLabel("resource_name", resourceName),
 		alertmanager.WithLabel("user", user),
-		alertmanager.WithLabel("operation_id", fmt.Sprintf("%d", time.Now().UnixNano())),
+		alertmanager.WithLabel("audit_id", auditID),
 		alertmanager.WithEndsAt(time.Now().Add(1*time.Hour)),
 		alertmanager.WithAnnotation("summary", "ConfigMap created"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s created ConfigMap %s/%s", user, resourceNamespace, resourceName)),
@@ -54,7 +69,12 @@ func main() {
 	}
 
 	// Operation 2: Update ConfigMap
-	fmt.Printf("[%s] UPDATE ConfigMap %s/%s by %s\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user)
+	auditID, err = generateAuditID()
+	if err != nil {
+		fmt.Printf("Failed to generate audit ID: %v\n", err)
+		return
+	}
+	fmt.Printf("[%s] UPDATE ConfigMap %s/%s by %s (audit_id: %s)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user, auditID)
 	updateAlert := alertmanager.NewAlert(
 		alertmanager.WithLabel("alertname", "AuditLog"),
 		alertmanager.WithLabel("operation", "update"),
@@ -62,7 +82,7 @@ func main() {
 		alertmanager.WithLabel("resource_namespace", resourceNamespace),
 		alertmanager.WithLabel("resource_name", resourceName),
 		alertmanager.WithLabel("user", user),
-		alertmanager.WithLabel("operation_id", fmt.Sprintf("%d", time.Now().UnixNano())),
+		alertmanager.WithLabel("audit_id", auditID),
 		alertmanager.WithEndsAt(time.Now().Add(1*time.Hour)),
 		alertmanager.WithAnnotation("summary", "ConfigMap updated"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s updated ConfigMap %s/%s", user, resourceNamespace, resourceName)),
@@ -72,8 +92,37 @@ func main() {
 		return
 	}
 
-	// Operation 3: Delete ConfigMap
-	fmt.Printf("[%s] DELETE ConfigMap %s/%s by %s\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user)
+	// Operation 3: Update ConfigMap again
+	auditID, err = generateAuditID()
+	if err != nil {
+		fmt.Printf("Failed to generate audit ID: %v\n", err)
+		return
+	}
+	fmt.Printf("[%s] UPDATE ConfigMap %s/%s by %s (audit_id: %s)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user, auditID)
+	updateAlert2 := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "AuditLog"),
+		alertmanager.WithLabel("operation", "update"),
+		alertmanager.WithLabel("resource_kind", resourceKind),
+		alertmanager.WithLabel("resource_namespace", resourceNamespace),
+		alertmanager.WithLabel("resource_name", resourceName),
+		alertmanager.WithLabel("user", user),
+		alertmanager.WithLabel("audit_id", auditID),
+		alertmanager.WithEndsAt(time.Now().Add(1*time.Hour)),
+		alertmanager.WithAnnotation("summary", "ConfigMap updated"),
+		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s updated ConfigMap %s/%s", user, resourceNamespace, resourceName)),
+	)
+	if err := am.Emit(updateAlert2); err != nil {
+		fmt.Printf("Failed to send UPDATE alert: %v\n", err)
+		return
+	}
+
+	// Operation 4: Delete ConfigMap
+	auditID, err = generateAuditID()
+	if err != nil {
+		fmt.Printf("Failed to generate audit ID: %v\n", err)
+		return
+	}
+	fmt.Printf("[%s] DELETE ConfigMap %s/%s by %s (audit_id: %s)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user, auditID)
 	deleteAlert := alertmanager.NewAlert(
 		alertmanager.WithLabel("alertname", "AuditLog"),
 		alertmanager.WithLabel("operation", "delete"),
@@ -81,7 +130,7 @@ func main() {
 		alertmanager.WithLabel("resource_namespace", resourceNamespace),
 		alertmanager.WithLabel("resource_name", resourceName),
 		alertmanager.WithLabel("user", user),
-		alertmanager.WithLabel("operation_id", fmt.Sprintf("%d", time.Now().UnixNano())),
+		alertmanager.WithLabel("audit_id", auditID),
 		alertmanager.WithEndsAt(time.Now().Add(1*time.Hour)),
 		alertmanager.WithAnnotation("summary", "ConfigMap deleted"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s deleted ConfigMap %s/%s", user, resourceNamespace, resourceName)),
@@ -91,8 +140,13 @@ func main() {
 		return
 	}
 
-	// Operation 4: Re-create ConfigMap
-	fmt.Printf("[%s] CREATE ConfigMap %s/%s by %s (recreate)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user)
+	// Operation 5: Re-create ConfigMap
+	auditID, err = generateAuditID()
+	if err != nil {
+		fmt.Printf("Failed to generate audit ID: %v\n", err)
+		return
+	}
+	fmt.Printf("[%s] CREATE ConfigMap %s/%s by %s (audit_id: %s)\n", time.Now().Format(time.RFC3339), resourceNamespace, resourceName, user, auditID)
 	recreateAlert := alertmanager.NewAlert(
 		alertmanager.WithLabel("alertname", "AuditLog"),
 		alertmanager.WithLabel("operation", "create"),
@@ -100,7 +154,7 @@ func main() {
 		alertmanager.WithLabel("resource_namespace", resourceNamespace),
 		alertmanager.WithLabel("resource_name", resourceName),
 		alertmanager.WithLabel("user", user),
-		alertmanager.WithLabel("operation_id", fmt.Sprintf("%d", time.Now().UnixNano())),
+		alertmanager.WithLabel("audit_id", auditID),
 		alertmanager.WithEndsAt(time.Now().Add(1*time.Hour)),
 		alertmanager.WithAnnotation("summary", "ConfigMap created"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s created ConfigMap %s/%s", user, resourceNamespace, resourceName)),
@@ -110,12 +164,9 @@ func main() {
 		return
 	}
 
-	fmt.Println()
-	fmt.Println("Successfully sent 4 audit log alerts to Alertmanager!")
-	fmt.Println()
-	fmt.Println("Key test: Will both CREATE operations appear as separate alerts?")
-	fmt.Println("They have identical labels but were sent at different times.")
-	fmt.Println()
+	fmt.Println("\nSuccessfully sent 5 audit log alerts to Alertmanager!")
+	fmt.Println("\nEach alert has a unique audit_id label to prevent deduplication.")
+	fmt.Println("Both CREATE and both UPDATE operations will appear as separate alerts.")
 	fmt.Println("Check the Alertmanager web UI at http://localhost:9093")
-	fmt.Println("Look for alerts with service=audit-demo and count how many appear.")
+	fmt.Println("Look for alerts with service=audit-demo - you should see all 5 operations.")
 }
