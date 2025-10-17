@@ -1,8 +1,8 @@
-module example
+module examples
 
 go 1.25.0
 
-replace github.com/spectrocloud-labs/alertmanager-client-go => ../../
+replace github.com/spectrocloud-labs/alertmanager-client-go => ../
 
 require (
 	github.com/go-logr/logr v1.4.3
