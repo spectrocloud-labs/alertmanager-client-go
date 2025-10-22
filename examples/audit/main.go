@@ -63,10 +63,12 @@ func main() {
 		alertmanager.WithAnnotation("summary", "ConfigMap created"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s created ConfigMap %s/%s", user, resourceNamespace, resourceName)),
 	)
-	if err := am.Emit(createAlert); err != nil {
+	resp, err := am.Emit(createAlert)
+	if err != nil {
 		fmt.Printf("Failed to send CREATE alert: %v\n", err)
 		return
 	}
+	resp.Body.Close()
 
 	// Operation 2: Update ConfigMap
 	auditID, err = generateAuditID()
@@ -87,10 +89,12 @@ func main() {
 		alertmanager.WithAnnotation("summary", "ConfigMap updated"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s updated ConfigMap %s/%s", user, resourceNamespace, resourceName)),
 	)
-	if err := am.Emit(updateAlert); err != nil {
+	resp, err = am.Emit(updateAlert)
+	if err != nil {
 		fmt.Printf("Failed to send UPDATE alert: %v\n", err)
 		return
 	}
+	resp.Body.Close()
 
 	// Operation 3: Update ConfigMap again
 	auditID, err = generateAuditID()
@@ -111,10 +115,12 @@ func main() {
 		alertmanager.WithAnnotation("summary", "ConfigMap updated"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s updated ConfigMap %s/%s", user, resourceNamespace, resourceName)),
 	)
-	if err := am.Emit(updateAlert2); err != nil {
+	resp, err = am.Emit(updateAlert2)
+	if err != nil {
 		fmt.Printf("Failed to send UPDATE alert: %v\n", err)
 		return
 	}
+	resp.Body.Close()
 
 	// Operation 4: Delete ConfigMap
 	auditID, err = generateAuditID()
@@ -135,10 +141,12 @@ func main() {
 		alertmanager.WithAnnotation("summary", "ConfigMap deleted"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s deleted ConfigMap %s/%s", user, resourceNamespace, resourceName)),
 	)
-	if err := am.Emit(deleteAlert); err != nil {
+	resp, err = am.Emit(deleteAlert)
+	if err != nil {
 		fmt.Printf("Failed to send DELETE alert: %v\n", err)
 		return
 	}
+	resp.Body.Close()
 
 	// Operation 5: Re-create ConfigMap
 	auditID, err = generateAuditID()
@@ -159,10 +167,12 @@ func main() {
 		alertmanager.WithAnnotation("summary", "ConfigMap created"),
 		alertmanager.WithAnnotation("description", fmt.Sprintf("User %s created ConfigMap %s/%s", user, resourceNamespace, resourceName)),
 	)
-	if err := am.Emit(recreateAlert); err != nil {
+	resp, err = am.Emit(recreateAlert)
+	if err != nil {
 		fmt.Printf("Failed to send CREATE alert: %v\n", err)
 		return
 	}
+	resp.Body.Close()
 
 	fmt.Println("\nSuccessfully sent 5 audit log alerts to Alertmanager!")
 	fmt.Println("\nEach alert has a unique audit_id label to prevent deduplication.")

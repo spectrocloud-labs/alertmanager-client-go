@@ -19,9 +19,6 @@ var (
 	// ErrEndpointRequired is returned when the Alertmanager endpoint is not provided.
 	ErrEndpointRequired = errors.New("invalid Alertmanager config: endpoint required")
 
-	// ErrEmissionFailed is returned when alert emission fails.
-	ErrEmissionFailed = errors.New("emission failed")
-
 	// ErrNilHTTPClient is returned when a nil HTTP client is provided.
 	ErrNilHTTPClient = errors.New("HTTP client cannot be nil")
 )
@@ -65,13 +62,9 @@ func NewAlertmanager(logger logr.Logger, client *http.Client, options ...Manager
 }
 
 // Emit sends one or more alerts to Alertmanager.
-func (a *Alertmanager) Emit(alerts ...*Alert) error {
-	if len(alerts) == 0 {
-		return nil
-	}
-
+func (a *Alertmanager) Emit(alerts ...*Alert) (*http.Response, error) {
 	if a.endpoint == "" {
-		return ErrEndpointRequired
+		return nil, ErrEndpointRequired
 	}
 
 	finalAlerts := make([]Alert, 0, len(alerts))
@@ -98,15 +91,12 @@ func (a *Alertmanager) Emit(alerts ...*Alert) error {
 
 	body, err := json.Marshal(finalAlerts)
 	if err != nil {
-		a.log.Error(err, "failed to marshal alerts", "alerts", finalAlerts)
-		return err
+		return nil, fmt.Errorf("failed to marshal alerts: %w", err)
 	}
-	a.log.V(1).Info("Alertmanager message", "payload", string(body))
 
 	req, err := http.NewRequest(http.MethodPost, a.endpoint, bytes.NewReader(body))
 	if err != nil {
-		a.log.Error(err, "failed to create HTTP POST request", "endpoint", a.endpoint)
-		return err
+		return nil, fmt.Errorf("failed to create HTTP request to %s: %w", a.endpoint, err)
 	}
 	req.Header.Add("Content-Type", "application/json")
 
@@ -115,22 +105,11 @@ func (a *Alertmanager) Emit(alerts ...*Alert) error {
 	}
 
 	resp, err := a.client.Do(req)
-	defer func() {
-		if resp != nil {
-			_ = resp.Body.Close()
-		}
-	}()
 	if err != nil {
-		a.log.Error(err, "failed to post alert", "endpoint", a.endpoint)
-		return err
-	}
-	if resp.StatusCode != 200 {
-		a.log.V(0).Info("failed to post alert", "endpoint", a.endpoint, "status", resp.Status, "code", resp.StatusCode)
-		return ErrEmissionFailed
+		return nil, fmt.Errorf("failed to post alert to %s: %w", a.endpoint, err)
 	}
 
-	a.log.V(0).Info("Successfully posted alert to Alertmanager", "endpoint", a.endpoint, "status", resp.Status, "code", resp.StatusCode)
-	return nil
+	return resp, nil
 }
 
 func basicAuthHeader(username, password string) (string, string) {

@@ -198,7 +198,6 @@ func TestEmit(t *testing.T) {
 			alerts: []*Alert{
 				NewAlert(WithLabel("alertname", "test")),
 			},
-			expectedError: ErrEmissionFailed,
 		},
 	}
 
@@ -224,7 +223,10 @@ func TestEmit(t *testing.T) {
 				t.Fatalf("failed to create alertmanager: %v", err)
 			}
 
-			err = am.Emit(tt.alerts...)
+			resp, err := am.Emit(tt.alerts...)
+			if resp != nil {
+				defer resp.Body.Close()
+			}
 
 			if tt.expectedError != nil {
 				if err == nil {
@@ -239,6 +241,17 @@ func TestEmit(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if tt.name == "server returns error" {
+				if resp.StatusCode != http.StatusInternalServerError {
+					t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, resp.StatusCode)
+				}
+			} else {
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+				}
 			}
 		})
 	}
