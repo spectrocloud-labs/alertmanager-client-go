@@ -63,10 +63,6 @@ func NewAlertmanager(logger logr.Logger, client *http.Client, options ...Manager
 
 // Emit sends one or more alerts to Alertmanager.
 func (a *Alertmanager) Emit(alerts ...*Alert) (*http.Response, error) {
-	if len(alerts) == 0 {
-		return nil, nil
-	}
-
 	if a.endpoint == "" {
 		return nil, ErrEndpointRequired
 	}

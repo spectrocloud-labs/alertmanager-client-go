@@ -224,6 +224,9 @@ func TestEmit(t *testing.T) {
 			}
 
 			resp, err := am.Emit(tt.alerts...)
+			if resp != nil {
+				defer resp.Body.Close()
+			}
 
 			if tt.expectedError != nil {
 				if err == nil {
@@ -238,14 +241,16 @@ func TestEmit(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
+				return
 			}
 
-			if resp != nil {
-				defer resp.Body.Close()
-
-				// For the "server returns error" test, verify we get the 500 status
-				if tt.name == "server returns error" && resp.StatusCode != http.StatusInternalServerError {
+			if tt.name == "server returns error" {
+				if resp.StatusCode != http.StatusInternalServerError {
 					t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, resp.StatusCode)
+				}
+			} else {
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
 				}
 			}
 		})
