@@ -76,9 +76,15 @@ func main() {
 	fmt.Println("Sending alerts to Alertmanager...")
 	fmt.Printf("Current time: %s\n\n", now.Format(time.RFC3339))
 
-	err = am.Emit(alerts...)
+	resp, err := am.Emit(alerts...)
 	if err != nil {
 		fmt.Printf("Failed to send alerts: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Alertmanager returned non-OK status: %d %s\n", resp.StatusCode, resp.Status)
 		return
 	}
 
