@@ -72,9 +72,11 @@ func main() {
 
 	alerts := []*alertmanager.Alert{pastStartAlert, quickResolveAlert, globalTimeoutAlert, longResolveAlert}
 
+	fmt.Print("=== Time-Based Alerts Example ===\n\n")
+
 	// Emit all alerts at once
+	fmt.Printf("Current time: %s\n", now.Format(time.RFC3339))
 	fmt.Println("Sending alerts to Alertmanager...")
-	fmt.Printf("Current time: %s\n\n", now.Format(time.RFC3339))
 
 	resp, err := am.Emit(alerts...)
 	if err != nil {
@@ -88,16 +90,19 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Successfully sent %d alerts to Alertmanager!\n", len(alerts))
-	fmt.Println("\nAlert behaviors:")
-	fmt.Println("startsAt (metadata for historical tracking):")
+	fmt.Printf("  ✓ Successfully sent %d alerts (Status: %d)\n", len(alerts), resp.StatusCode)
+
+	fmt.Print("\nAlert behaviors:\n")
 	fmt.Printf("  1. PastStartAlert - Started at %s (10 minutes ago)\n", pastStartTime.Format(time.RFC3339))
-	fmt.Printf("     Will show as 'firing for 10 minutes' in the UI\n")
-	fmt.Println("\nendsAt (controls resolution timing):")
+	fmt.Println("     Shows 'firing for 10 minutes' in UI (startsAt is metadata)")
 	fmt.Printf("  2. QuickResolveAlert - Will resolve at %s (in 1 minute)\n", quickResolveTime.Format(time.RFC3339))
 	fmt.Printf("  3. GlobalTimeoutAlert - Will resolve at ~%s (in 5 minutes)\n", globalTimeoutResolveTime.Format(time.RFC3339))
 	fmt.Printf("  4. LongResolveAlert - Will resolve at %s (in 10 minutes)\n", longResolveTime.Format(time.RFC3339))
-	fmt.Println("\nKey insight: Without endsAt, resolve_timeout starts from when Alertmanager")
-	fmt.Println("receives the alert, NOT from startsAt. The startsAt field is purely metadata.")
-	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093 to see the alerts.")
+
+	fmt.Println("\n=== Summary ===")
+	fmt.Println("✓ startsAt sets historical metadata (doesn't delay visibility)")
+	fmt.Println("✓ endsAt controls when alerts auto-resolve")
+	fmt.Println("✓ Without endsAt, resolve_timeout starts from receipt time, not startsAt")
+	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093")
+	fmt.Println("Look for alerts with service=time-demo")
 }

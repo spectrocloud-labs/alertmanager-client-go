@@ -4,19 +4,35 @@ This directory contains examples demonstrating various features of the alertmana
 
 ## Prerequisites
 
-All examples require Alertmanager to be running. Start it using Docker Compose:
+All examples require Alertmanager to be running. The setup includes two instances:
+- **HTTP** instance on port 9093 (for basic, audit, and time examples)
+- **HTTPS** instance on port 9094 with TLS and basic auth (for secure example)
 
+### Setup
+
+Generate TLS certificates (required for the secure example):
 ```bash
 cd examples
+./generate-certs.sh
+```
+
+Start both Alertmanager instances:
+```bash
 docker-compose up -d
 ```
 
-Verify Alertmanager is running:
+Verify both instances are running:
 ```bash
+# HTTP instance
 curl http://localhost:9093/api/v2/status
+
+# HTTPS instance (with basic auth)
+curl -k -u admin:password https://localhost:9094/api/v2/status
 ```
 
-View alerts in the web UI: http://localhost:9093
+View alerts in the web UIs:
+- HTTP: <http://localhost:9093>
+- HTTPS: <https://localhost:9094> (Username: admin, Password: password)
 
 When finished, stop Alertmanager:
 ```bash
@@ -138,18 +154,86 @@ go run ./time
   - Without `endsAt`, timeout starts from receipt time, not `startsAt`
   - Only `endsAt` controls actual resolution timing
 
+---
+
+### 4. Secure Connection Example (`secure/`)
+
+Demonstrates how to use TLS and basic authentication for secure communication with Alertmanager, and validates that security features are working correctly.
+
+**What it shows:**
+- Configuring TLS with a custom CA certificate
+- Setting up basic authentication credentials
+- Validating that authentication is enforced
+- Validating that TLS certificate verification is working
+- Production-ready security configuration
+
+**Tests performed:**
+1. **Test 1** - Attempts to send alert WITHOUT basic auth credentials (expects 401 Unauthorized)
+2. **Test 2** - Attempts to send alert with WRONG password (expects 401 Unauthorized)
+3. **Test 3** - Attempts to send alert WITHOUT CA certificate (expects TLS verification failure)
+4. **Test 4** - Attempts to send alert with TLS 1.2 only (expects TLS protocol version error)
+5. **Test 5** - Sends alert with CORRECT TLS 1.3 + basic auth + CA cert (expects success)
+
+**Run it:**
+```bash
+go run ./secure
+```
+
+**Expected output:**
+All 5 tests should pass, validating that:
+- Basic auth is enforced (Tests 1 & 2 fail with 401)
+- TLS certificate verification is working (Test 3 fails with TLS error)
+- TLS 1.2 is rejected by server (Test 4 fails with protocol version error)
+- Secure communication succeeds with TLS 1.3 + proper credentials (Test 5 succeeds)
+
+**Key concepts:**
+
+- **`WithCustomCA(caCert []byte)`**: Configures TLS to trust a custom CA certificate
+  - Use this when Alertmanager uses certificates signed by a private CA
+  - The client will verify the server's certificate against this CA
+  - More secure than `WithInsecure(true)` which skips verification entirely
+  - Without this option, self-signed certificates are rejected by the system cert pool
+
+- **`WithBasicAuth(username, password string)`**: Sets HTTP basic authentication credentials
+  - Credentials are sent in the Authorization header with base64 encoding
+  - Should always be used with TLS to prevent credential leakage
+  - Common in production Alertmanager deployments
+  - Requests without credentials or with wrong credentials receive 401 Unauthorized
+
+- **`WithMinTLSVersion(minVersion TLSVersion)`**: Sets the minimum TLS version for connections
+  - Use constants like `TLS12`, `TLS13`
+  - If not specified, TLS 1.2 is the default minimum
+
+- **`WithMaxTLSVersion(maxVersion TLSVersion)`**: Sets the maximum TLS version for connections
+  - Use constants like `TLS12`, `TLS13`
+  - Useful for enforcing specific TLS versions or preventing negotiation to higher versions
+
+- **Production setup**: Combining both TLS and basic auth provides:
+  - Encryption of data in transit (TLS)
+  - Server identity verification (certificate validation)
+  - Access control (basic authentication)
+  - TLS version control (minimum/maximum version enforcement)
+
+**Note:** The example uses port 9094 which runs a separate Alertmanager instance configured with TLS and basic auth, while other examples use port 9093 with plain HTTP.
+
 ## Running All Examples
 
 To run all examples in sequence:
 
 ```bash
 cd examples
+
+# Generate certificates and start Alertmanager instances
+./generate-certs.sh
 docker-compose up -d
 
+# Run all examples
 go run ./basic
 go run ./audit
 go run ./time
+go run ./secure
 
+# Stop Alertmanager
 docker-compose down
 ```
 

@@ -1,4 +1,5 @@
 services:
+  # Standard HTTP Alertmanager for basic examples
   alertmanager:
     image: prom/alertmanager:latest
     ports:
@@ -9,4 +10,21 @@ services:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
       - '--web.external-url=http://localhost:9093'
+      - '--cluster.listen-address='
+
+  # HTTPS Alertmanager with TLS and basic auth for secure example
+  alertmanager-secure:
+    image: prom/alertmanager:latest
+    ports:
+      - "9094:9094"
+    volumes:
+      - ./alertmanager.yaml:/etc/alertmanager/alertmanager.yml
+      - ./web-config.yaml:/etc/alertmanager/web-config.yml
+      - ./certs:/etc/certs:ro
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://localhost:9094'
+      - '--web.listen-address=:9094'
+      - '--web.config.file=/etc/alertmanager/web-config.yml'
       - '--cluster.listen-address='

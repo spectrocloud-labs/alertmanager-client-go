@@ -18,6 +18,9 @@ route:
   - matchers:
     - service="audit-demo"
     receiver: 'examples'
+  - matchers:
+    - service="secure-demo"
+    receiver: 'examples'
 
 receivers:
 - name: 'default-receiver'

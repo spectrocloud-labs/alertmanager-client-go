@@ -11,6 +11,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TLSVersion represents a TLS protocol version.
+type TLSVersion uint16
+
+// TLS version constants for use with WithMinTLSVersion.
+// These map directly to crypto/tls version constants.
+// TLS 1.2 is the recommended minimum for production use.
+const (
+	TLS10 TLSVersion = tls.VersionTLS10
+	TLS11 TLSVersion = tls.VersionTLS11
+	TLS12 TLSVersion = tls.VersionTLS12
+	TLS13 TLSVersion = tls.VersionTLS13
+)
+
 // ManagerOption represents a configuration option for Alertmanager.
 type ManagerOption func(*Alertmanager) error
 
@@ -96,6 +109,53 @@ func WithInsecure(insecureSkipVerify bool) ManagerOption {
 		}
 
 		transport.TLSClientConfig.InsecureSkipVerify = insecureSkipVerify
+		a.client.Transport = transport
+
+		return nil
+	}
+}
+
+// WithMinTLSVersion sets the minimum TLS version for HTTPS connections.
+// Use the TLS* constants (e.g., TLS12, TLS13).
+// If not specified, TLS 1.2 is used as the default minimum.
+func WithMinTLSVersion(minVersion TLSVersion) ManagerOption {
+	return func(a *Alertmanager) error {
+		transport, ok := a.client.Transport.(*http.Transport)
+		if !ok {
+			transport = &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			}
+		}
+
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{}
+		}
+
+		transport.TLSClientConfig.MinVersion = uint16(minVersion)
+		a.client.Transport = transport
+
+		return nil
+	}
+}
+
+// WithMaxTLSVersion sets the maximum TLS version for HTTPS connections.
+// Use the TLS* constants (e.g., TLS12, TLS13).
+func WithMaxTLSVersion(maxVersion TLSVersion) ManagerOption {
+	return func(a *Alertmanager) error {
+		transport, ok := a.client.Transport.(*http.Transport)
+		if !ok {
+			transport = &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			}
+		}
+
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
+
+		transport.TLSClientConfig.MaxVersion = uint16(maxVersion)
 		a.client.Transport = transport
 
 		return nil

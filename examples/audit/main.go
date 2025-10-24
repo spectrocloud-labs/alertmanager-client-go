@@ -36,6 +36,8 @@ func main() {
 		return
 	}
 
+	fmt.Print("=== Audit Log Example ===\n\n")
+
 	// Simulate a series of CRUD operations on a Kubernetes ConfigMap
 	resourceKind := "ConfigMap"
 	resourceNamespace := "default"
@@ -174,9 +176,12 @@ func main() {
 	}
 	resp.Body.Close()
 
-	fmt.Println("\nSuccessfully sent 5 audit log alerts to Alertmanager!")
-	fmt.Println("\nEach alert has a unique audit_id label to prevent deduplication.")
-	fmt.Println("Both CREATE and both UPDATE operations will appear as separate alerts.")
-	fmt.Println("Check the Alertmanager web UI at http://localhost:9093")
-	fmt.Println("Look for alerts with service=audit-demo - you should see all 5 operations.")
+	fmt.Println("\n  ✓ Successfully sent 5 audit log alerts")
+
+	fmt.Println("\n=== Summary ===")
+	fmt.Println("✓ Each alert has a unique audit_id label to prevent deduplication")
+	fmt.Println("✓ Both CREATE and both UPDATE operations appear as separate alerts")
+	fmt.Println("✓ Using endsAt to keep audit entries visible for 1 hour")
+	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093")
+	fmt.Println("Look for alerts with service=audit-demo")
 }

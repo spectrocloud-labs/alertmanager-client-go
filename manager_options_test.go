@@ -410,3 +410,165 @@ func TestWithProxyURL(t *testing.T) {
 		})
 	}
 }
+
+func TestWithMinAndMaxTLSVersion(t *testing.T) {
+	logger := logr.Discard()
+
+	tests := []struct {
+		name         string
+		minVersion   *TLSVersion
+		maxVersion   *TLSVersion
+		expectMinTLS uint16
+		expectMaxTLS uint16
+	}{
+		{
+			name:         "Min TLS 1.3 only",
+			minVersion:   ptr(TLS13),
+			expectMinTLS: 0x0304,
+		},
+		{
+			name:         "Max TLS 1.2 only",
+			maxVersion:   ptr(TLS12),
+			expectMaxTLS: 0x0303,
+		},
+		{
+			name:         "TLS 1.2 only (min and max same)",
+			minVersion:   ptr(TLS12),
+			maxVersion:   ptr(TLS12),
+			expectMinTLS: 0x0303,
+			expectMaxTLS: 0x0303,
+		},
+		{
+			name:         "TLS 1.2 to 1.3 range",
+			minVersion:   ptr(TLS12),
+			maxVersion:   ptr(TLS13),
+			expectMinTLS: 0x0303,
+			expectMaxTLS: 0x0304,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &http.Client{}
+			options := []ManagerOption{WithEndpoint("https://example.com")}
+
+			if tt.minVersion != nil {
+				options = append(options, WithMinTLSVersion(*tt.minVersion))
+			}
+			if tt.maxVersion != nil {
+				options = append(options, WithMaxTLSVersion(*tt.maxVersion))
+			}
+
+			am, err := NewAlertmanager(logger, client, options...)
+			if err != nil {
+				t.Fatalf("failed to create alertmanager: %v", err)
+			}
+
+			transport, ok := am.client.Transport.(*http.Transport)
+			if !ok {
+				t.Fatalf("expected http.Transport, got %T", am.client.Transport)
+			}
+
+			if transport.TLSClientConfig == nil {
+				t.Fatal("expected TLSClientConfig to be set")
+			}
+
+			if tt.minVersion != nil {
+				if transport.TLSClientConfig.MinVersion != tt.expectMinTLS {
+					t.Errorf("expected MinVersion to be 0x%04x, got 0x%04x", tt.expectMinTLS, transport.TLSClientConfig.MinVersion)
+				}
+			}
+
+			if tt.maxVersion != nil {
+				if transport.TLSClientConfig.MaxVersion != tt.expectMaxTLS {
+					t.Errorf("expected MaxVersion to be 0x%04x, got 0x%04x", tt.expectMaxTLS, transport.TLSClientConfig.MaxVersion)
+				}
+			}
+		})
+	}
+}
+
+func TestWithMinTLSVersionOrderIndependence(t *testing.T) {
+	logger := logr.Discard()
+
+	tests := []struct {
+		name         string
+		options      []ManagerOption
+		expectMinTLS *TLSVersion
+		expectMaxTLS *TLSVersion
+	}{
+		{
+			name: "WithMinTLSVersion before WithCustomCA",
+			options: []ManagerOption{
+				WithEndpoint("https://example.com"),
+				WithMinTLSVersion(TLS13),
+				WithCustomCA([]byte("fake cert")),
+			},
+			expectMinTLS: ptr(TLS13),
+		},
+		{
+			name: "WithMinTLSVersion after WithCustomCA",
+			options: []ManagerOption{
+				WithEndpoint("https://example.com"),
+				WithCustomCA([]byte("fake cert")),
+				WithMinTLSVersion(TLS13),
+			},
+			expectMinTLS: ptr(TLS13),
+		},
+		{
+			name: "WithMaxTLSVersion after WithInsecure",
+			options: []ManagerOption{
+				WithEndpoint("https://example.com"),
+				WithInsecure(true),
+				WithMaxTLSVersion(TLS12),
+			},
+			expectMaxTLS: ptr(TLS12),
+		},
+		{
+			name: "WithMinTLSVersion and WithMaxTLSVersion with WithCustomCA",
+			options: []ManagerOption{
+				WithEndpoint("https://example.com"),
+				WithMaxTLSVersion(TLS13),
+				WithCustomCA([]byte("fake cert")),
+				WithMinTLSVersion(TLS12),
+			},
+			expectMinTLS: ptr(TLS12),
+			expectMaxTLS: ptr(TLS13),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &http.Client{}
+			am, err := NewAlertmanager(logger, client, tt.options...)
+			if err != nil {
+				t.Fatalf("failed to create alertmanager: %v", err)
+			}
+
+			transport, ok := am.client.Transport.(*http.Transport)
+			if !ok {
+				t.Fatalf("expected http.Transport, got %T", am.client.Transport)
+			}
+
+			if transport.TLSClientConfig == nil {
+				t.Fatal("expected TLSClientConfig to be set")
+			}
+
+			if tt.expectMinTLS != nil {
+				if transport.TLSClientConfig.MinVersion != uint16(*tt.expectMinTLS) {
+					t.Errorf("expected MinVersion to be 0x%04x, got 0x%04x", uint16(*tt.expectMinTLS), transport.TLSClientConfig.MinVersion)
+				}
+			}
+
+			if tt.expectMaxTLS != nil {
+				if transport.TLSClientConfig.MaxVersion != uint16(*tt.expectMaxTLS) {
+					t.Errorf("expected MaxVersion to be 0x%04x, got 0x%04x", uint16(*tt.expectMaxTLS), transport.TLSClientConfig.MaxVersion)
+				}
+			}
+		})
+	}
+}
+
+func ptr(v TLSVersion) *TLSVersion {
+	return &v
+}
