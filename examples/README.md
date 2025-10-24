@@ -200,10 +200,19 @@ All 5 tests should pass, validating that:
   - Common in production Alertmanager deployments
   - Requests without credentials or with wrong credentials receive 401 Unauthorized
 
+- **`WithMinTLSVersion(minVersion TLSVersion)`**: Sets the minimum TLS version for connections
+  - Use constants like `TLS12`, `TLS13`
+  - If not specified, TLS 1.2 is the default minimum
+
+- **`WithMaxTLSVersion(maxVersion TLSVersion)`**: Sets the maximum TLS version for connections
+  - Use constants like `TLS12`, `TLS13`
+  - Useful for enforcing specific TLS versions or preventing negotiation to higher versions
+
 - **Production setup**: Combining both TLS and basic auth provides:
   - Encryption of data in transit (TLS)
   - Server identity verification (certificate validation)
   - Access control (basic authentication)
+  - TLS version control (minimum/maximum version enforcement)
 
 **Note:** The example uses port 9094 which runs a separate Alertmanager instance configured with TLS and basic auth, while other examples use port 9093 with plain HTTP.
 
