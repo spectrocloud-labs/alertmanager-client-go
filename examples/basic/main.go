@@ -51,6 +51,8 @@ func main() {
 
 	alerts := []*alertmanager.Alert{cpuAlert, memoryAlert, diskAlert}
 
+	fmt.Print("=== Basic Alertmanager Client Example ===\n\n")
+
 	// Emit all alerts at once
 	fmt.Println("Sending alerts to Alertmanager...")
 	resp, err := am.Emit(alerts...)
@@ -65,10 +67,18 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Successfully sent %d alerts to Alertmanager!\n", len(alerts))
+	fmt.Printf("  ✓ Successfully sent %d alerts (Status: %d)\n", len(alerts), resp.StatusCode)
+
 	fmt.Println("\nAlerts sent:")
-	fmt.Println("1. HighCPUUsage - Warning severity")
-	fmt.Println("2. HighMemoryUsage - Critical severity")
-	fmt.Println("3. DiskSpaceLow - Warning severity with custom mountpoint label")
-	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093 to see the alerts.")
+	fmt.Println("  1. HighCPUUsage - Warning severity")
+	fmt.Println("  2. HighMemoryUsage - Critical severity")
+	fmt.Println("  3. DiskSpaceLow - Warning severity with custom mountpoint label")
+
+	fmt.Println("\n=== Summary ===")
+	fmt.Println("✓ Created and sent 3 alerts with different severities")
+	fmt.Println("✓ Used base labels (service, environment) applied to all alerts")
+	fmt.Println("✓ Added custom labels and annotations per alert")
+	fmt.Println("\nCheck the Alertmanager web UI at http://localhost:9093")
+	fmt.Println("Look for alerts with service=basic-demo")
+
 }

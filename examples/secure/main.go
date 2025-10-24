@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("=== Secure Alertmanager Client Example ===\n")
+	fmt.Print("=== Secure Alertmanager Client Example ===\n\n")
 
 	// Test 1: Verify that missing basic auth fails
 	fmt.Println("Test 1: Attempting to send alert WITHOUT basic auth (should fail)...")
@@ -192,4 +192,5 @@ func main() {
 	fmt.Println("✓ Secure communication works with TLS 1.3 + basic auth + CA cert")
 	fmt.Println("\nCheck the Alertmanager web UI at https://localhost:9094")
 	fmt.Println("(Username: admin, Password: password)")
+	fmt.Println("Look for alerts with service=secure-demo")
 }
