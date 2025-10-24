@@ -3,6 +3,7 @@
 tls_server_config:
   cert_file: /etc/certs/server.pem
   key_file: /etc/certs/server-key.pem
+  min_version: TLS13
 
 # Basic auth credentials
 # Username: admin

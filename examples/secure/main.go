@@ -118,13 +118,44 @@ func main() {
 		fmt.Printf("  ✗ Unexpected success (expected TLS error)\n")
 	}
 
-	// Test 4: Verify that correct TLS + basic auth succeeds
-	fmt.Println("\nTest 4: Sending alert with CORRECT TLS + basic auth (should succeed)...")
+	// Test 4: Verify that TLS 1.2 is rejected by server
+	fmt.Println("\nTest 4: Attempting to send alert with TLS 1.2 (should fail)...")
 	client4 := &http.Client{Timeout: 30 * time.Second}
 	am4, err := alertmanager.NewAlertmanager(logger, client4,
 		alertmanager.WithEndpoint("https://localhost:9094"),
 		alertmanager.WithCustomCA(caCert),
 		alertmanager.WithBasicAuth("admin", "password"),
+		alertmanager.WithMinTLSVersion(alertmanager.TLS12),
+		alertmanager.WithMaxTLSVersion(alertmanager.TLS12),
+		alertmanager.WithBaseLabel("service", "secure-demo"),
+	)
+	if err != nil {
+		fmt.Printf("Failed to create Alertmanager client: %v\n", err)
+		return
+	}
+
+	alert4 := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "TLS12Test"),
+		alertmanager.WithLabel("severity", "info"),
+		alertmanager.WithAnnotation("summary", "Testing with TLS 1.2"),
+	)
+
+	resp4, err := am4.Emit(alert4)
+	if err != nil {
+		fmt.Printf("  ✓ TLS 1.2 rejected as expected: %v\n", err)
+	} else {
+		defer resp4.Body.Close()
+		fmt.Printf("  ✗ Unexpected success with TLS 1.2 (server should reject)\n")
+	}
+
+	// Test 5: Verify that correct TLS 1.3 + basic auth succeeds
+	fmt.Println("\nTest 5: Sending alert with CORRECT TLS 1.3 + basic auth (should succeed)...")
+	client5 := &http.Client{Timeout: 30 * time.Second}
+	am5, err := alertmanager.NewAlertmanager(logger, client5,
+		alertmanager.WithEndpoint("https://localhost:9094"),
+		alertmanager.WithCustomCA(caCert),
+		alertmanager.WithBasicAuth("admin", "password"),
+		alertmanager.WithMinTLSVersion(alertmanager.TLS13),
 		alertmanager.WithBaseLabel("service", "secure-demo"),
 		alertmanager.WithBaseLabel("environment", "production"),
 	)
@@ -133,31 +164,32 @@ func main() {
 		return
 	}
 
-	alert4 := alertmanager.NewAlert(
+	alert5 := alertmanager.NewAlert(
 		alertmanager.WithLabel("alertname", "SecureConnectionTest"),
 		alertmanager.WithLabel("severity", "info"),
 		alertmanager.WithAnnotation("summary", "Testing TLS and basic authentication"),
 		alertmanager.WithAnnotation("description", "This alert was sent over HTTPS with basic authentication"),
 	)
 
-	resp4, err := am4.Emit(alert4)
+	resp5, err := am5.Emit(alert5)
 	if err != nil {
 		fmt.Printf("  ✗ Failed to send alert: %v\n", err)
 		return
 	}
-	defer resp4.Body.Close()
+	defer resp5.Body.Close()
 
-	if resp4.StatusCode != http.StatusOK {
-		fmt.Printf("  ✗ Alertmanager returned non-OK status: %d %s\n", resp4.StatusCode, resp4.Status)
+	if resp5.StatusCode != http.StatusOK {
+		fmt.Printf("  ✗ Alertmanager returned non-OK status: %d %s\n", resp5.StatusCode, resp5.Status)
 		return
 	}
 
-	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp4.StatusCode)
+	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp5.StatusCode)
 
 	fmt.Println("\n=== Summary ===")
 	fmt.Println("✓ Basic auth is enforced (requests without credentials fail)")
 	fmt.Println("✓ TLS certificate verification is working (self-signed cert rejected without CA)")
-	fmt.Println("✓ Secure communication works with proper credentials and CA certificate")
+	fmt.Println("✓ TLS 1.2 is rejected by server (only TLS 1.3+ accepted)")
+	fmt.Println("✓ Secure communication works with TLS 1.3 + basic auth + CA cert")
 	fmt.Println("\nCheck the Alertmanager web UI at https://localhost:9094")
 	fmt.Println("(Username: admin, Password: password)")
 }
