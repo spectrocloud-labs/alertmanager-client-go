@@ -415,11 +415,11 @@ func TestWithMinAndMaxTLSVersion(t *testing.T) {
 	logger := logr.Discard()
 
 	tests := []struct {
-		name           string
-		minVersion     *TLSVersion
-		maxVersion     *TLSVersion
-		expectMinTLS   uint16
-		expectMaxTLS   uint16
+		name         string
+		minVersion   *TLSVersion
+		maxVersion   *TLSVersion
+		expectMinTLS uint16
+		expectMaxTLS uint16
 	}{
 		{
 			name:         "Min TLS 1.3 only",
@@ -486,10 +486,6 @@ func TestWithMinAndMaxTLSVersion(t *testing.T) {
 			}
 		})
 	}
-}
-
-func ptr(v TLSVersion) *TLSVersion {
-	return &v
 }
 
 func TestWithMinTLSVersionOrderIndependence(t *testing.T) {
@@ -571,4 +567,8 @@ func TestWithMinTLSVersionOrderIndependence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ptr(v TLSVersion) *TLSVersion {
+	return &v
 }
