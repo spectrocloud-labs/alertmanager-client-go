@@ -31,8 +31,8 @@ curl -k -u admin:password https://localhost:9094/api/v2/status
 ```
 
 View alerts in the web UIs:
-- HTTP: http://localhost:9093
-- HTTPS: https://localhost:9094 (Username: admin, Password: password)
+- HTTP: <http://localhost:9093>
+- HTTPS: <https://localhost:9094> (Username: admin, Password: password)
 
 When finished, stop Alertmanager:
 ```bash
