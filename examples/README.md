@@ -171,7 +171,8 @@ Demonstrates how to use TLS and basic authentication for secure communication wi
 1. **Test 1** - Attempts to send alert WITHOUT basic auth credentials (expects 401 Unauthorized)
 2. **Test 2** - Attempts to send alert with WRONG password (expects 401 Unauthorized)
 3. **Test 3** - Attempts to send alert WITHOUT CA certificate (expects TLS verification failure)
-4. **Test 4** - Sends alert with CORRECT TLS + basic auth (expects success)
+4. **Test 4** - Attempts to send alert with TLS 1.2 only (expects TLS protocol version error)
+5. **Test 5** - Sends alert with CORRECT TLS 1.3 + basic auth + CA cert (expects success)
 
 **Run it:**
 ```bash
@@ -179,10 +180,11 @@ go run ./secure
 ```
 
 **Expected output:**
-All 4 tests should pass, validating that:
+All 5 tests should pass, validating that:
 - Basic auth is enforced (Tests 1 & 2 fail with 401)
 - TLS certificate verification is working (Test 3 fails with TLS error)
-- Secure communication succeeds with proper credentials (Test 4 succeeds)
+- TLS 1.2 is rejected by server (Test 4 fails with protocol version error)
+- Secure communication succeeds with TLS 1.3 + proper credentials (Test 5 succeeds)
 
 **Key concepts:**
 
