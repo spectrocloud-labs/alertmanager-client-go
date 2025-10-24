@@ -150,7 +150,9 @@ func WithMaxTLSVersion(maxVersion TLSVersion) ManagerOption {
 		}
 
 		if transport.TLSClientConfig == nil {
-			transport.TLSClientConfig = &tls.Config{}
+			transport.TLSClientConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
 		}
 
 		transport.TLSClientConfig.MaxVersion = uint16(maxVersion)
