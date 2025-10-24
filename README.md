@@ -24,5 +24,6 @@ The `examples/` directory contains multiple examples demonstrating different fea
 - **basic** - Basic usage of the library with simple alerts
 - **time** - Demonstrates time-based alerts using `WithStartsAt()` and `WithEndsAt()`
 - **audit** - Using Alertmanager as an audit log sink for CRUD operations
+- **secure** - TLS and basic authentication configuration with security validation
 
 See [examples/README.md](examples/README.md) for detailed information about each example and instructions on how to run them.
