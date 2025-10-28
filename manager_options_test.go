@@ -117,9 +117,10 @@ func TestWithBasicAuth(t *testing.T) {
 				t.Fatalf("failed to create alertmanager: %v", err)
 			}
 
-			if am.username != tt.username || am.password != tt.password {
-				t.Errorf("expected username=%s, password=%s, got username=%s, password=%s",
-					tt.username, tt.password, am.username, am.password)
+			expectedHeader := basicAuthHeader(tt.username, tt.password)
+			if am.authHeader != expectedHeader {
+				t.Errorf("expected authHeader=%s, got authHeader=%s",
+					expectedHeader, am.authHeader)
 			}
 		})
 	}

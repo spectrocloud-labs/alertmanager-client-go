@@ -298,7 +298,7 @@ func TestBasicAuthHeader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, got := basicAuthHeader(tt.username, tt.password)
+			got := basicAuthHeader(tt.username, tt.password)
 			if got != tt.expected {
 				t.Errorf("expected (%s), got (%s)", tt.expected, got)
 			}

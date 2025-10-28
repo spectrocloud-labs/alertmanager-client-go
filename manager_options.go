@@ -54,8 +54,7 @@ func WithEndpoint(endpoint string) ManagerOption {
 // WithBasicAuth sets basic authentication credentials.
 func WithBasicAuth(username, password string) ManagerOption {
 	return func(a *Alertmanager) error {
-		a.username = username
-		a.password = password
+		a.authHeader = basicAuthHeader(username, password)
 		return nil
 	}
 }
