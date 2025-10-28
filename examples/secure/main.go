@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -209,7 +210,7 @@ func demonstrateOptionsPattern(logger logr.Logger, caCert []byte) {
 
 func demonstrateArgsConstructor(logger logr.Logger, caCert []byte) {
 	// Write CA cert to a temporary file for the example
-	tmpFile := "/tmp/alertmanager-ca.pem"
+	tmpFile := filepath.Join(os.TempDir(), "alertmanager-ca.pem")
 	if err := os.WriteFile(tmpFile, caCert, 0600); err != nil {
 		fmt.Printf("Failed to write temp CA file: %v\n", err)
 		return
