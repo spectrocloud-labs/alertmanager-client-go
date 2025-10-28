@@ -205,12 +205,6 @@ func demonstrateOptionsPattern(logger logr.Logger, caCert []byte) {
 	}
 
 	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp5.StatusCode)
-
-	fmt.Println("\nOptions pattern benefits:")
-	fmt.Println("✓ Basic auth is enforced (requests without credentials fail)")
-	fmt.Println("✓ TLS certificate verification is working (self-signed cert rejected without CA)")
-	fmt.Println("✓ TLS 1.2 is rejected by server (only TLS 1.3+ accepted)")
-	fmt.Println("✓ Secure communication works with TLS 1.3 + basic auth + CA cert")
 }
 
 func demonstrateArgsConstructor(logger logr.Logger, caCert []byte) {
@@ -276,11 +270,4 @@ func demonstrateArgsConstructor(logger logr.Logger, caCert []byte) {
 	}
 
 	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp.StatusCode)
-
-	fmt.Println("\nArgs constructor benefits:")
-	fmt.Println("✓ Struct-based configuration (easy to unmarshal from YAML/JSON)")
-	fmt.Println("✓ All security options available (TLS versions, auth, CA certs)")
-	fmt.Println("✓ Secure defaults applied automatically (2s timeout)")
-	fmt.Println("✓ Built-in enable/disable flag for easy feature toggling")
-	fmt.Println("✓ Perfect for loading credentials from secret managers")
 }
