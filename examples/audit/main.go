@@ -37,14 +37,13 @@ func main() {
 	}
 
 	fmt.Print("=== Audit Log Example ===\n\n")
+	fmt.Println("Simulating CRUD operations on ConfigMap...")
 
 	// Simulate a series of CRUD operations on a Kubernetes ConfigMap
 	resourceKind := "ConfigMap"
 	resourceNamespace := "default"
 	resourceName := "my-config"
 	user := "john@example.com"
-
-	fmt.Println("Simulating CRUD operations on ConfigMap...")
 
 	// Operation 1: Create ConfigMap
 	auditID, err := generateAuditID()

@@ -82,9 +82,10 @@ Demonstrates using Alertmanager as an audit log sink for tracking CRUD operation
 
 **Operations tracked:**
 1. **CREATE** - User creates a ConfigMap
-2. **UPDATE** - User updates the ConfigMap
-3. **DELETE** - User deletes the ConfigMap
-4. **CREATE** - User recreates the ConfigMap (demonstrating why unique IDs are needed)
+2. **UPDATE** - User updates the ConfigMap (first update)
+3. **UPDATE** - User updates the ConfigMap again (second update)
+4. **DELETE** - User deletes the ConfigMap
+5. **CREATE** - User recreates the ConfigMap (demonstrating why unique IDs are needed)
 
 **Run it:**
 ```bash
@@ -95,16 +96,16 @@ go run ./audit
 
 Alertmanager deduplicates alerts based solely on their label set - timing doesn't matter. Without a unique identifier, the two CREATE operations would be merged into a single alert.
 
-**Solution:** Include an `operation_id` label with a unique timestamp:
+**Solution:** Include an `audit_id` label with a unique value (cryptographically secure random ID):
 
 ```go
-alertmanager.WithLabel("operation_id", fmt.Sprintf("%d", time.Now().UnixNano()))
+alertmanager.WithLabel("audit_id", auditID)
 ```
 
 This ensures:
 - Every audit log entry is unique and won't be deduplicated
 - You get a complete audit trail with all operations, even duplicates
-- Each alert can be correlated back to a specific operation timestamp
+- Each alert can be correlated back to a specific operation via its unique audit ID
 
 ---
 
@@ -158,14 +159,19 @@ go run ./time
 
 ### 4. Secure Connection Example (`secure/`)
 
-Demonstrates how to use TLS and basic authentication for secure communication with Alertmanager, and validates that security features are working correctly.
+Demonstrates how to use TLS and basic authentication for secure communication with Alertmanager. This example shows **two approaches** for configuring secure connections:
+1. Using functional options with `NewAlertmanager` (maximum flexibility)
+2. Using the Args struct with `NewAlertmanagerWithArgs` (convenient for config files)
 
 **What it shows:**
 - Configuring TLS with a custom CA certificate
 - Setting up basic authentication credentials
 - Validating that authentication is enforced
 - Validating that TLS certificate verification is working
-- Production-ready security configuration
+- Enforcing TLS 1.3 minimum version
+- Two different configuration approaches for the same secure setup
+
+#### Example 1: Using Options Pattern
 
 **Tests performed:**
 1. **Test 1** - Attempts to send alert WITHOUT basic auth credentials (expects 401 Unauthorized)
@@ -174,19 +180,28 @@ Demonstrates how to use TLS and basic authentication for secure communication wi
 4. **Test 4** - Attempts to send alert with TLS 1.2 only (expects TLS protocol version error)
 5. **Test 5** - Sends alert with CORRECT TLS 1.3 + basic auth + CA cert (expects success)
 
+#### Example 2: Using Args Constructor
+
+Demonstrates the same secure connection using the `NewAlertmanagerWithArgs` constructor:
+- Configures all security options through the `Args` struct
+- Perfect for loading configuration from YAML/JSON files or environment variables
+- Shows how to configure username, password, TLS CA cert path, and TLS version requirements
+
 **Run it:**
 ```bash
 go run ./secure
 ```
 
 **Expected output:**
-All 5 tests should pass, validating that:
+All tests should pass, validating that:
 - Basic auth is enforced (Tests 1 & 2 fail with 401)
 - TLS certificate verification is working (Test 3 fails with TLS error)
 - TLS 1.2 is rejected by server (Test 4 fails with protocol version error)
-- Secure communication succeeds with TLS 1.3 + proper credentials (Test 5 succeeds)
+- Secure communication succeeds with TLS 1.3 + proper credentials (Test 5 & Args test succeed)
 
 **Key concepts:**
+
+#### Options Pattern (NewAlertmanager)
 
 - **`WithCustomCA(caCert []byte)`**: Configures TLS to trust a custom CA certificate
   - Use this when Alertmanager uses certificates signed by a private CA
@@ -208,11 +223,17 @@ All 5 tests should pass, validating that:
   - Use constants like `TLS12`, `TLS13`
   - Useful for enforcing specific TLS versions or preventing negotiation to higher versions
 
-- **Production setup**: Combining both TLS and basic auth provides:
-  - Encryption of data in transit (TLS)
-  - Server identity verification (certificate validation)
-  - Access control (basic authentication)
-  - TLS version control (minimum/maximum version enforcement)
+#### Args Pattern (NewAlertmanagerWithArgs)
+
+- **`Args` struct**: Convenient struct-based configuration
+  - `Enabled`: Toggle client on/off without changing config
+  - `AlertmanagerURL`: The Alertmanager endpoint
+  - `Username` / `Password`: Basic auth credentials
+  - `TLSCACertPath`: Path to CA certificate file (loaded from disk)
+  - `TLSMinVersion` / `TLSMaxVersion`: String versions like "TLS12", "TLS13"
+  - `TLSInsecureSkipVerify`: Skip TLS verification (not recommended)
+  - `ProxyURL`: HTTP proxy URL
+  - `Timeout`: Request timeout (defaults to 2 seconds)
 
 **Note:** The example uses port 9094 which runs a separate Alertmanager instance configured with TLS and basic auth, while other examples use port 9093 with plain HTTP.
 

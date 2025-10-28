@@ -21,6 +21,9 @@ route:
   - matchers:
     - service="secure-demo"
     receiver: 'examples'
+  - matchers:
+    - service="secure-args-demo"
+    receiver: 'examples'
 
 receivers:
 - name: 'default-receiver'

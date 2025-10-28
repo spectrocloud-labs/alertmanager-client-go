@@ -25,6 +25,27 @@ func main() {
 	}
 
 	fmt.Print("=== Secure Alertmanager Client Example ===\n\n")
+	fmt.Println("This example demonstrates two ways to configure secure connections:")
+	fmt.Print("1. Using NewAlertmanager with functional options\n")
+	fmt.Print("2. Using NewAlertmanagerWithArgs with Args struct\n\n")
+
+	fmt.Print("--- Example 1: Using Options Pattern ---\n\n")
+	demonstrateOptionsPattern(logger, caCert)
+
+	fmt.Print("\n\n--- Example 2: Using Args Constructor ---\n\n")
+	demonstrateArgsConstructor(logger, caCert)
+
+	fmt.Print("\n\n=== Summary ===\n")
+	fmt.Println("Both approaches support full security configuration:")
+	fmt.Println("✓ TLS 1.3 with custom CA certificates")
+	fmt.Println("✓ Basic authentication")
+	fmt.Println("✓ Certificate verification")
+	fmt.Print("\nCheck the Alertmanager web UI at https://localhost:9094\n")
+	fmt.Println("(Username: admin, Password: password)")
+	fmt.Println("Look for alerts with service=secure-demo or service=secure-args-demo")
+}
+
+func demonstrateOptionsPattern(logger logr.Logger, caCert []byte) {
 
 	// Test 1: Verify that missing basic auth fails
 	fmt.Println("Test 1: Attempting to send alert WITHOUT basic auth (should fail)...")
@@ -185,12 +206,81 @@ func main() {
 
 	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp5.StatusCode)
 
-	fmt.Println("\n=== Summary ===")
+	fmt.Println("\nOptions pattern benefits:")
 	fmt.Println("✓ Basic auth is enforced (requests without credentials fail)")
 	fmt.Println("✓ TLS certificate verification is working (self-signed cert rejected without CA)")
 	fmt.Println("✓ TLS 1.2 is rejected by server (only TLS 1.3+ accepted)")
 	fmt.Println("✓ Secure communication works with TLS 1.3 + basic auth + CA cert")
-	fmt.Println("\nCheck the Alertmanager web UI at https://localhost:9094")
-	fmt.Println("(Username: admin, Password: password)")
-	fmt.Println("Look for alerts with service=secure-demo")
+}
+
+func demonstrateArgsConstructor(logger logr.Logger, caCert []byte) {
+	// Write CA cert to a temporary file for the example
+	tmpFile := "/tmp/alertmanager-ca.pem"
+	if err := os.WriteFile(tmpFile, caCert, 0600); err != nil {
+		fmt.Printf("Failed to write temp CA file: %v\n", err)
+		return
+	}
+	defer os.Remove(tmpFile)
+
+	// Test: Verify that correct TLS 1.3 + basic auth succeeds using Args constructor
+	fmt.Println("Test: Sending alert with CORRECT TLS 1.3 + basic auth using Args (should succeed)...")
+
+	// NewAlertmanagerWithArgs provides a convenient way to configure
+	// the client with a struct - perfect for loading from config files
+	// This demonstrates all the security-related fields
+	args := alertmanager.Args{
+		Enabled:         true,
+		AlertmanagerURL: "https://localhost:9094",
+		Username:        "admin",
+		Password:        "password",
+		TLSCACertPath:   tmpFile,
+		TLSMinVersion:   "TLS13",         // Enforce TLS 1.3
+		Timeout:         5 * time.Second, // Optional: defaults to 2s
+		//TLSMaxVersion:         "TLS13",             // Optional: enforce max TLS version
+		//TLSInsecureSkipVerify: false,               // Optional: skip TLS verification (not recommended)
+		//ProxyURL:              "http://proxy:8080", // Optional: HTTP proxy
+	}
+
+	am, err := alertmanager.NewAlertmanagerWithArgs(logger, args)
+	if err != nil {
+		fmt.Printf("  ✗ Failed to create Alertmanager client: %v\n", err)
+		return
+	}
+
+	// Client can be nil if Enabled=false
+	if am == nil {
+		fmt.Println("  ✗ Alertmanager client is disabled (Enabled=false)")
+		return
+	}
+
+	// Create and send a test alert
+	testAlert := alertmanager.NewAlert(
+		alertmanager.WithLabel("alertname", "ArgsConstructorSecureTest"),
+		alertmanager.WithLabel("severity", "info"),
+		alertmanager.WithLabel("service", "secure-args-demo"),
+		alertmanager.WithLabel("environment", "production"),
+		alertmanager.WithAnnotation("summary", "Testing Args constructor with security"),
+		alertmanager.WithAnnotation("description", "This alert was sent using NewAlertmanagerWithArgs with TLS 1.3 and basic auth"),
+	)
+
+	resp, err := am.Emit(testAlert)
+	if err != nil {
+		fmt.Printf("  ✗ Failed to send alert: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("  ✗ Alertmanager returned non-OK status: %d %s\n", resp.StatusCode, resp.Status)
+		return
+	}
+
+	fmt.Printf("  ✓ Successfully sent alert (Status: %d)\n", resp.StatusCode)
+
+	fmt.Println("\nArgs constructor benefits:")
+	fmt.Println("✓ Struct-based configuration (easy to unmarshal from YAML/JSON)")
+	fmt.Println("✓ All security options available (TLS versions, auth, CA certs)")
+	fmt.Println("✓ Secure defaults applied automatically (2s timeout)")
+	fmt.Println("✓ Built-in enable/disable flag for easy feature toggling")
+	fmt.Println("✓ Perfect for loading credentials from secret managers")
 }
