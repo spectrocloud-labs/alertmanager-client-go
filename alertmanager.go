@@ -91,9 +91,7 @@ func NewAlertmanagerWithArgs(logger logr.Logger, args Args) (*Alertmanager, erro
 	}
 
 	httpClient := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
+		Transport: http.DefaultTransport.(*http.Transport).Clone(),
 	}
 
 	opts := []ManagerOption{

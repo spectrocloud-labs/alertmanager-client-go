@@ -73,9 +73,7 @@ func WithCustomCA(caCert []byte) ManagerOption {
 
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			}
+			transport = http.DefaultTransport.(*http.Transport).Clone()
 		}
 
 		if transport.TLSClientConfig == nil {
@@ -96,9 +94,7 @@ func WithInsecure(insecureSkipVerify bool) ManagerOption {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			}
+			transport = http.DefaultTransport.(*http.Transport).Clone()
 		}
 
 		if transport.TLSClientConfig == nil {
@@ -121,9 +117,7 @@ func WithMinTLSVersion(minVersion TLSVersion) ManagerOption {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			}
+			transport = http.DefaultTransport.(*http.Transport).Clone()
 		}
 
 		if transport.TLSClientConfig == nil {
@@ -143,9 +137,7 @@ func WithMaxTLSVersion(maxVersion TLSVersion) ManagerOption {
 	return func(a *Alertmanager) error {
 		transport, ok := a.client.Transport.(*http.Transport)
 		if !ok {
-			transport = &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			}
+			transport = http.DefaultTransport.(*http.Transport).Clone()
 		}
 
 		if transport.TLSClientConfig == nil {
