@@ -51,9 +51,6 @@ type Args struct {
 	// TLSMaxVersion is the maximum TLS version (optional, e.g., "TLS12", "TLS13")
 	TLSMaxVersion string
 
-	// ProxyURL is the HTTP proxy URL (optional)
-	ProxyURL string
-
 	// Timeout is the timeout for HTTP requests to Alertmanager
 	// If not specified, a default of 2 seconds is used
 	Timeout time.Duration
@@ -93,7 +90,9 @@ func NewAlertmanagerWithArgs(logger logr.Logger, args Args) (*Alertmanager, erro
 		timeout = 2 * time.Second
 	}
 
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Transport: http.DefaultTransport.(*http.Transport).Clone(),
+	}
 
 	opts := []ManagerOption{
 		WithEndpoint(args.AlertmanagerURL),
@@ -116,10 +115,6 @@ func NewAlertmanagerWithArgs(logger logr.Logger, args Args) (*Alertmanager, erro
 
 	if args.TLSInsecureSkipVerify {
 		opts = append(opts, WithInsecure(true))
-	}
-
-	if args.ProxyURL != "" {
-		opts = append(opts, WithProxyURL(args.ProxyURL))
 	}
 
 	if args.TLSMinVersion != "" {
