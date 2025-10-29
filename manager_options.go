@@ -161,30 +161,6 @@ func WithMaxTLSVersion(maxVersion TLSVersion) ManagerOption {
 	}
 }
 
-// WithProxyURL configures an HTTP proxy for the client.
-func WithProxyURL(proxyURL string) ManagerOption {
-	return func(a *Alertmanager) error {
-		if proxyURL == "" {
-			return nil
-		}
-
-		parsedURL, err := url.Parse(proxyURL)
-		if err != nil {
-			return errors.Wrap(err, "invalid proxy URL")
-		}
-
-		transport, ok := a.client.Transport.(*http.Transport)
-		if !ok {
-			transport = &http.Transport{}
-		}
-
-		transport.Proxy = http.ProxyURL(parsedURL)
-		a.client.Transport = transport
-
-		return nil
-	}
-}
-
 // WithTimeout sets the HTTP client timeout on the existing client.
 func WithTimeout(timeout time.Duration) ManagerOption {
 	return func(a *Alertmanager) error {
