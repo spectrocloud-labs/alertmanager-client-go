@@ -93,7 +93,11 @@ func NewAlertmanagerWithArgs(logger logr.Logger, args Args) (*Alertmanager, erro
 		timeout = 2 * time.Second
 	}
 
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 
 	opts := []ManagerOption{
 		WithEndpoint(args.AlertmanagerURL),
