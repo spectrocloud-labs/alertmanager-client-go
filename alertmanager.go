@@ -66,7 +66,7 @@ type FlagBinder interface {
 // BindFlags binds all Args fields to flags using the provided FlagBinder.
 func (a *Args) BindFlags(fb FlagBinder) {
 	fb.BoolVar(&a.Enabled, "alertmanager-enabled", false, "Enable sending alerts to Alertmanager")
-	fb.StringVar(&a.AlertmanagerURL, "alertmanager-url", "", "Alertmanager URL for sending audit logs")
+	fb.StringVar(&a.AlertmanagerURL, "alertmanager-url", "", "Alertmanager URL for sending alerts")
 	fb.StringVar(&a.Username, "alertmanager-username", "", "Alertmanager basic auth username")
 	fb.StringVar(&a.Password, "alertmanager-password", "", "Alertmanager basic auth password")
 	fb.StringVar(&a.TLSCACertPath, "alertmanager-ca-cert-path", "", "Path to Alertmanager TLS CA certificate")
