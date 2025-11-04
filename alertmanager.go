@@ -63,8 +63,7 @@ type FlagBinder interface {
 	DurationVar(p *time.Duration, name string, value time.Duration, usage string)
 }
 
-// BindFlags binds all audit logging flags to the provided FlagSet
-// Works with both flag.FlagSet and pflag.FlagSet
+// BindFlags binds all Args fields to flags using the provided FlagBinder.
 func (a *Args) BindFlags(fb FlagBinder) {
 	fb.BoolVar(&a.Enabled, "alert-manager-enabled", false, "Enable sending alerts to Alertmanager")
 	fb.StringVar(&a.AlertmanagerURL, "alertmanager-url", "", "Alertmanager URL for sending audit logs")
