@@ -56,6 +56,27 @@ type Args struct {
 	Timeout time.Duration
 }
 
+// FlagBinder is an interface satisfied by both flag.FlagSet and pflag.FlagSet
+type FlagBinder interface {
+	BoolVar(p *bool, name string, value bool, usage string)
+	StringVar(p *string, name string, value string, usage string)
+	DurationVar(p *time.Duration, name string, value time.Duration, usage string)
+}
+
+// BindFlags binds all audit logging flags to the provided FlagSet
+// Works with both flag.FlagSet and pflag.FlagSet
+func (a *Args) BindFlags(fb FlagBinder) {
+	fb.BoolVar(&a.Enabled, "alert-manager-enabled", false, "Enable sending alerts to Alertmanager")
+	fb.StringVar(&a.AlertmanagerURL, "alertmanager-url", "", "Alertmanager URL for sending audit logs")
+	fb.StringVar(&a.Username, "alertmanager-username", "", "Alertmanager basic auth username")
+	fb.StringVar(&a.Password, "alertmanager-password", "", "Alertmanager basic auth password")
+	fb.StringVar(&a.TLSCACertPath, "alertmanager-ca-cert-path", "", "Path to Alertmanager TLS CA certificate")
+	fb.BoolVar(&a.TLSInsecureSkipVerify, "alertmanager-tls-insecure", false, "Skip Alertmanager TLS certificate verification")
+	fb.StringVar(&a.TLSMinVersion, "alertmanager-tls-min-version", "", "Minimum TLS version for Alertmanager (TLS10, TLS11, TLS12, TLS13)")
+	fb.StringVar(&a.TLSMaxVersion, "alertmanager-tls-max-version", "", "Maximum TLS version for Alertmanager (TLS10, TLS11, TLS12, TLS13)")
+	fb.DurationVar(&a.Timeout, "alertmanager-timeout", 0, "Timeout for Alertmanager requests (default 2s)")
+}
+
 // Alertmanager represents the Alertmanager client.
 type Alertmanager struct {
 	client *http.Client
