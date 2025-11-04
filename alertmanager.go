@@ -71,8 +71,8 @@ func (a *Args) BindFlags(fb FlagBinder) {
 	fb.StringVar(&a.Password, "alertmanager-password", "", "Alertmanager basic auth password")
 	fb.StringVar(&a.TLSCACertPath, "alertmanager-ca-cert-path", "", "Path to Alertmanager TLS CA certificate")
 	fb.BoolVar(&a.TLSInsecureSkipVerify, "alertmanager-tls-insecure", false, "Skip Alertmanager TLS certificate verification")
-	fb.StringVar(&a.TLSMinVersion, "alertmanager-tls-min-version", "", "Minimum TLS version for Alertmanager (TLS10, TLS11, TLS12, TLS13)")
-	fb.StringVar(&a.TLSMaxVersion, "alertmanager-tls-max-version", "", "Maximum TLS version for Alertmanager (TLS10, TLS11, TLS12, TLS13)")
+	fb.StringVar(&a.TLSMinVersion, "alertmanager-tls-min-version", "", "Minimum TLS version for Alertmanager (TLS12, TLS13)")
+	fb.StringVar(&a.TLSMaxVersion, "alertmanager-tls-max-version", "", "Maximum TLS version for Alertmanager (TLS12, TLS13)")
 	fb.DurationVar(&a.Timeout, "alertmanager-timeout", 0, "Timeout for Alertmanager requests (default 2s)")
 }
 
